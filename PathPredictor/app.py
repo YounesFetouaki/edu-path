@@ -9,8 +9,7 @@ model = None
 # Load model on startup
 try:
     # In a real scenario, we load from a file or MLflow
-    # model = pickle.load(open("model.pkl", "rb"))
-    pass
+    model = pickle.load(open("model.pkl", "rb"))
 except:
     model = None
 

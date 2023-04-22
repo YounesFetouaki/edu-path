@@ -8,7 +8,7 @@ import os
 DB_USER = 'admin'
 DB_PASS = 'adminpassword'
 DB_HOST = os.getenv('DB_HOST', 'postgres')
-DB_PORT = '5432'
+DB_PORT = os.getenv('DB_PORT', '5432')
 DB_NAME = 'edupath_db'
 DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
