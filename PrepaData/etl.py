@@ -1,3 +1,13 @@
+import pandas as pd
+from sqlalchemy import create_engine
+import os
+
+DB_USER = os.getenv('POSTGRES_USER', 'admin')
+DB_PASS = os.getenv('POSTGRES_PASSWORD', 'adminpassword')
+DB_HOST = os.getenv('DB_HOST', 'postgres')
+DB_PORT = os.getenv('DB_PORT', '5432')
+DB_NAME = os.getenv('POSTGRES_DB', 'edupath_db')
+
 DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 def run_etl():
