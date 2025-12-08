@@ -1,7 +1,14 @@
-const { faker } = require('@faker-js/faker');
+// const { faker } = require('@faker-js/faker'); // Removed for ESM compatibility
 const db = require('../config/db');
 
+// Helper to get faker instance
+const getFaker = async () => {
+    const module = await import('@faker-js/faker');
+    return module.faker;
+};
+
 const generateStudents = async (count = 50) => {
+    const faker = await getFaker();
     const students = [];
     for (let i = 0; i < count; i++) {
         students.push([
@@ -38,6 +45,7 @@ const generateCourses = async () => {
 };
 
 const generateActivities = async () => {
+    const faker = await getFaker();
     // Get course IDs
     const res = await db.query('SELECT course_id FROM courses');
     const courses = res.rows;
@@ -60,6 +68,7 @@ const generateActivities = async () => {
 };
 
 const generateLogs = async (logCount = 500) => {
+    const faker = await getFaker();
     const sRes = await db.query('SELECT student_id FROM students');
     const students = sRes.rows;
     const aRes = await db.query('SELECT activity_id, max_score FROM activities');

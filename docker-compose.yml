@@ -44,6 +44,13 @@ services:
     container_name: edupath-gateway
     ports:
       - "8000:8000"
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:3005
+      LMS_SERVICE_URL: http://lms-connector:3001
+      STUDENT_COACH_URL: http://student-coach-backend:5000
+      PROFILER_URL: http://student-profiler:5001
+      PREDICTOR_URL: http://path-predictor:5002
+      RECO_URL: http://reco-builder:5003
     depends_on:
       - auth-service
       - lms-connector

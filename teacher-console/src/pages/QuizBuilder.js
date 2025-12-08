@@ -19,7 +19,7 @@ export default function QuizBuilder() {
 
         try {
             // Direct call to Python Service (CORS is enabled)
-            const res = await fetch('http://localhost:8001/quiz', {
+            const res = await fetch('http://localhost:8000/student/quiz', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ topic })

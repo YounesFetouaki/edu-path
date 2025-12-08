@@ -8,11 +8,11 @@ app = Flask(__name__)
 CORS(app)
 
 # DB Config
-DB_USER = 'admin'
-DB_PASS = 'adminpassword'
-DB_HOST = '127.0.0.1'
-DB_PORT = '5433'
-DB_NAME = 'edupath_db'
+DB_USER = os.getenv('POSTGRES_USER', 'admin')
+DB_PASS = os.getenv('POSTGRES_PASSWORD', 'adminpassword')
+DB_HOST = os.getenv('POSTGRES_HOST', 'postgres') # 'postgres' is the docker service name
+DB_PORT = os.getenv('POSTGRES_PORT', '5432') # Internal port is 5432
+DB_NAME = os.getenv('POSTGRES_DB', 'edupath_db')
 DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 engine = create_engine(DATABASE_URI)
@@ -36,4 +36,4 @@ def get_student_profile(student_id):
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(port=5002)
+    app.run(host='0.0.0.0', port=5001)

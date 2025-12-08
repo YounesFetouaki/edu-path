@@ -18,7 +18,7 @@ export default function CourseManager() {
 
     const fetchCourses = async () => {
         try {
-            const res = await fetch('http://localhost:3001/api/lms/courses');
+            const res = await fetch('http://localhost:8000/lms/courses');
             const data = await res.json();
             setCourses(data);
         } catch (err) {
@@ -28,7 +28,7 @@ export default function CourseManager() {
 
     const handleCreate = async () => {
         try {
-            await fetch('http://localhost:3001/api/lms/courses', {
+            await fetch('http://localhost:8000/lms/courses', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ...newCourse, teacherId: 1 })
