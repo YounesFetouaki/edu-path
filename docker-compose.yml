@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # --- Infrastructure ---
+  postgres:
+    image: postgres:15
+    container_name: edupath-postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: adminpassword
+      POSTGRES_DB: edupath_db
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio
+    container_name: edupath-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: adminpassword
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  # --- Core Services ---
+  auth-service:
+    build: ./AuthService
+    container_name: edupath-auth
+    ports:
+      - "3005:3005"
+    environment:
+      JWT_SECRET: secret_key_123
+    depends_on:
+      - postgres
+
+  api-gateway:
+    build: ./APIGateway
+    container_name: edupath-gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth-service
+      - lms-connector
+      - student-coach-backend
+
+  lms-connector:
+    build: ./LMSConnector
+    container_name: edupath-lms
+    ports:
+      - "3001:3001"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+    depends_on:
+      - postgres
+
+  # --- Analytics & ML Services ---
+  prepa-data:
+    build: ./PrepaData
+    container_name: edupath-prepa
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+    depends_on:
+      - postgres
+
+  student-profiler:
+    build: ./StudentProfiler
+    container_name: edupath-profiler
+    ports:
+      - "5001:5001"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+    depends_on:
+      - postgres
+
+  path-predictor:
+    build: ./PathPredictor
+    container_name: edupath-predictor
+    ports:
+      - "5002:5002"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+    depends_on:
+      - postgres
+
+  reco-builder:
+    build: ./RecoBuilder
+    container_name: edupath-reco
+    ports:
+      - "5003:5003"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      MINIO_ENDPOINT: minio:9000
+    depends_on:
+      - postgres
+      - minio
+
+  # --- Applications ---
+  student-coach-backend:
+    build: ./StudentCoach/backend
+    container_name: edupath-coach-backend
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+    depends_on:
+      - postgres
+
+  teacher-console:
+    build: ./teacher-console
+    container_name: edupath-teacher-console
+    ports:
+      - "3000:3000"
+    stdin_open: true # For React
+    depends_on:
+      - api-gateway
+
+volumes:
+  postgres_data:
+  minio_data:
