@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 import random
 from dotenv import load_dotenv
+import consul
 
 load_dotenv()
 
@@ -15,6 +16,30 @@ except ImportError:
     HAS_OPENAI = False
 
 app = FastAPI()
+
+# Consul Configuration
+CONSUL_HOST = os.getenv("CONSUL_HOST", "consul")
+CONSUL_PORT = int(os.getenv("CONSUL_PORT", 8500))
+SERVICE_ID = "student-coach-backend-5000"
+
+@app.on_event("startup")
+def startup_event():
+    try:
+        c = consul.Consul(host=CONSUL_HOST, port=CONSUL_PORT)
+        c.agent.service.register(
+            name="student-coach-backend",
+            service_id=SERVICE_ID,
+            address="student-coach-backend",
+            port=5000,
+            check={
+                "http": "http://student-coach-backend:5000/", # Health check via root endpoint which returns status ok
+                "interval": "10s",
+                "timeout": "5s"
+            }
+        )
+        print("Registered with Consul")
+    except Exception as e:
+        print(f"Consul registration failed: {e}")
 
 app.add_middleware(
     CORSMiddleware,

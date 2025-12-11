@@ -133,6 +133,27 @@ services:
     depends_on:
       - api-gateway
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: edupath-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  consul:
+    image: hashicorp/consul
+    container_name: edupath-consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    command: "agent -server -bootstrap-expect=1 -ui -client=0.0.0.0"
+
 volumes:
   postgres_data:
   minio_data:
+  rabbitmq_data:

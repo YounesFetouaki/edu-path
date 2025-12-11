@@ -42,4 +42,32 @@ app.post('/auth/verify', (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`AuthService running on port ${PORT}`));
+const consul = require('consul')({
+    host: 'consul',
+    port: 8500,
+});
+
+app.listen(PORT, () => {
+    console.log(`AuthService running on port ${PORT}`);
+
+    const serviceId = `auth-service-${PORT}`;
+    const consulService = {
+        name: 'auth-service',
+        address: 'auth-service',
+        port: PORT,
+        id: serviceId,
+        check: {
+            http: `http://auth-service:${PORT}/auth/verify`, // Health check URL
+            interval: '10s',
+            timeout: '5s',
+        }
+    };
+
+    consul.agent.service.register(consulService, err => {
+        if (err) {
+            console.error('Consul registration failed:', err);
+            return;
+        }
+        console.log('Registered with Consul');
+    });
+});
