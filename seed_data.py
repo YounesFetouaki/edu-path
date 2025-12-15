@@ -1,0 +1,257 @@
+import os
+import random
+import time
+from datetime import datetime, timedelta
+# Try importing faker, if not present we will generate simple data
+try:
+    from faker import Faker
+    fake = Faker()
+except ImportError:
+    class Faker:
+        def name(self): return f"User_{random.randint(1000,9999)}"
+        def email(self): return f"user{random.randint(1000,9999)}@example.com"
+        def user_name(self): return f"user_{random.randint(1000,9999)}"
+        def paragraph(self): return "Lorem ipsum content for testing."
+        def sentence(self): return "Short sentence description."
+        def image_url(self): return "http://placehold.it/200x200"
+    fake = Faker()
+
+import psycopg2
+from psycopg2 import sql
+
+# DB Config (Environment variables or default for Docker internal)
+DB_USER = os.getenv('POSTGRES_USER', 'admin')
+DB_PASS = os.getenv('POSTGRES_PASSWORD', 'adminpassword')
+DB_HOST = os.getenv('DB_HOST', 'postgres')
+DB_PORT = os.getenv('DB_PORT', '5432')
+DB_NAME = os.getenv('POSTGRES_DB', 'edupath_db')
+
+def get_db_connection():
+    try:
+        conn = psycopg2.connect(
+            host=DB_HOST,
+            database=DB_NAME,
+            user=DB_USER,
+            password=DB_PASS,
+            port=DB_PORT
+        )
+        return conn
+    except Exception as e:
+        print(f"Error connecting to DB: {e}")
+        return None
+
+def seed_users(cur, count=50):
+    print(f"Seeding {count} users...")
+    users = []
+    # Add fixed demo users
+    users.append(('student', 'student@edupath.com', 'password', 'STUDENT'))
+    users.append(('teacher', 'teacher@edupath.com', 'password', 'TEACHER'))
+    users.append(('admin', 'admin@edupath.com', 'admin', 'ADMIN'))
+
+    for _ in range(count):
+        username = fake.user_name()
+        email = f"{username}_{random.randint(1,999)}@edupath.com"
+        password = 'password' 
+        role = 'STUDENT'
+        users.append((username, email, password, role))
+
+    insert_query = """
+    INSERT INTO users (username, email, password_hash, role)
+    VALUES %s
+    ON CONFLICT (email) DO NOTHING
+    RETURNING id, email, role;
+    """
+    
+    # Execute batch insert is tricky with raw psycopg2 depending on version, doing loop for simplicity/safety with conflict
+    ids = []
+    for u in users:
+        try:
+            cur.execute("INSERT INTO users (username, email, password_hash, role) VALUES (%s, %s, %s, %s) ON CONFLICT (email) DO UPDATE SET role=EXCLUDED.role RETURNING id, email, role", u)
+            res = cur.fetchone()
+            if res:
+                ids.append(res)
+        except Exception as e:
+            print(f"Skipping user {u[1]}: {e}")
+    
+    return ids
+
+def seed_students(cur, user_data):
+    print(f"Seeding students profiles for {len(user_data)} users...")
+    for u_id, email, role in user_data:
+        if role != 'STUDENT': continue
+        
+        name = fake.name()
+        persona = random.choice(['Risk', 'Star', 'Standard', 'Risk', 'Standard'])
+        
+        cur.execute("""
+            INSERT INTO students (user_id, name, email, persona)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (email) DO NOTHING
+        """, (u_id, name, email, persona))
+
+def seed_courses(cur, count=10):
+    print(f"Seeding {count} courses...")
+    cur.execute("SELECT COUNT(*) FROM courses")
+    if cur.fetchone()[0] > 0:
+        print("Courses already exist, skipping...")
+        return
+
+    categories = ['Math', 'Science', 'History', 'Programming', 'Art']
+    for i in range(count):
+        title = f"Intro to {fake.sentence()}"[:50]
+        desc = fake.paragraph()
+        cat = random.choice(categories)
+        thumb = f"https://picsum.photos/seed/{i}/300/200"
+        
+        cur.execute("INSERT INTO courses (title, description, category, thumbnail_url) VALUES (%s, %s, %s, %s) RETURNING id", 
+                    (title, desc, cat, thumb))
+        course_id = cur.fetchone()[0]
+        
+        # Seed Modules
+        for m in range(random.randint(3, 8)):
+            cur.execute("INSERT INTO modules (course_id, title, order_index) VALUES (%s, %s, %s) RETURNING id",
+                        (course_id, f"Module {m+1}: {fake.sentence()}"[:40], m))
+            mod_id = cur.fetchone()[0]
+
+def main():
+    print("Waiting for DB...")
+    time.sleep(2) # Give a moment
+    conn = get_db_connection()
+    if not conn:
+        print("Failed to connect.")
+        return
+    
+    conn.autocommit = True
+    cur = conn.cursor()
+    
+    # 1. Ensure tables exist (Run schema if needed, but assuming schema.sql applied via tool or docker-entrypoint)
+    # We can run the CREATE TABLEs here just in case
+    cur.execute("DROP TABLE IF EXISTS students CASCADE;")
+    cur.execute("DROP TABLE IF EXISTS users CASCADE;")
+    cur.execute("DROP TABLE IF EXISTS courses CASCADE;") # might as well refresh everything
+    cur.execute("DROP TABLE IF EXISTS modules CASCADE;")
+    cur.execute("DROP TABLE IF EXISTS student_profiles CASCADE;")
+    cur.execute("DROP TABLE IF EXISTS teacher_classes CASCADE;")
+    cur.execute("DROP TABLE IF EXISTS classes CASCADE;")
+    
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username VARCHAR(50) UNIQUE NOT NULL,
+      email VARCHAR(100) UNIQUE NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      role VARCHAR(20) DEFAULT 'STUDENT',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS classes (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(100)
+    );
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS teacher_classes (
+      teacher_id INTEGER REFERENCES users(id),
+      class_id INTEGER REFERENCES classes(id),
+      PRIMARY KEY (teacher_id, class_id)
+    );
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS students (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id),
+      class_id INTEGER REFERENCES classes(id),
+      name VARCHAR(100),
+      email VARCHAR(100) UNIQUE,
+      persona VARCHAR(50) DEFAULT 'Standard',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS courses (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(100),
+      description TEXT,
+      category VARCHAR(50),
+      thumbnail_url VARCHAR(255)
+    );
+    """)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS modules (
+      id SERIAL PRIMARY KEY,
+      course_id INTEGER REFERENCES courses(id),
+      title VARCHAR(100),
+      order_index INTEGER
+    );
+    """)
+    
+    # Create student_profiles table (used by Profiler service)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS student_profiles (
+      student_id INTEGER PRIMARY KEY,
+      email VARCHAR(100),
+      cluster_label INTEGER,
+      profile_type VARCHAR(50)
+    );
+    """)
+
+    # 2. Seed Data
+    user_data = seed_users(cur, count=100) 
+    
+    # Identify Teachers
+    teachers = [u for u in user_data if u[2] == 'TEACHER'] # user_data comes as (id, email, role) from SQL RETURNING
+    
+    # Seed Classes
+    print("Seeding classes...")
+    class_ids = []
+    class_names = ["Math 101", "Physics 2A", "Biology 1B", "CS 101", "History 5", "Literature 10"]
+    for c_name in class_names:
+        cur.execute("INSERT INTO classes (name) VALUES (%s) RETURNING id", (c_name,))
+        class_ids.append(cur.fetchone()[0])
+        
+    # Assign Teachers to Classes
+    print("Assigning teachers to classes...")
+    for t_id in [t[0] for t in teachers]:
+        # Assign 2 random classes to each teacher
+        assigned = random.sample(class_ids, 2)
+        for c_id in assigned:
+            cur.execute("INSERT INTO teacher_classes (teacher_id, class_id) VALUES (%s, %s) ON CONFLICT DO NOTHING", (t_id, c_id))
+
+    # Seed Students with Classes
+    print(f"Seeding students profiles for {len(user_data)} users...")
+    for u_id, email, role in user_data:
+        if role != 'STUDENT': continue
+        
+        name = fake.name()
+        persona = random.choice(['Risk', 'Star', 'Standard', 'Risk', 'Standard'])
+        class_id = random.choice(class_ids) # Assign to random class
+        
+        cur.execute("""
+            INSERT INTO students (user_id, class_id, name, email, persona)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (email) DO NOTHING
+        """, (u_id, class_id, name, email, persona))
+
+    seed_courses(cur, count=20)
+    
+    # Seed student_profiles
+    print("Seeding student_profiles...")
+    cur.execute("SELECT id, email, persona FROM students")
+    students = cur.fetchall()
+    for s in students:
+        s_id, email, persona = s
+        # Map persona to simple cluster
+        cluster = 0
+        if persona == 'Risk': cluster = 2
+        elif persona == 'Star': cluster = 1
+        
+        cur.execute("INSERT INTO student_profiles (student_id, email, cluster_label, profile_type) VALUES (%s, %s, %s, %s) ON CONFLICT (student_id) DO NOTHING",
+                    (s_id, email, cluster, persona))
+    
+    print("Seeding Complete!")
+    cur.close()
+    conn.close()
+
+if __name__ == "__main__":
+    main()

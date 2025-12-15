@@ -10,6 +10,7 @@ import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 export default function StudentList() {
+    const { user } = useAuth();
     const [students, setStudents] = useState([]);
 
     // Assign State
@@ -26,11 +27,13 @@ export default function StudentList() {
     const [loadingGrades, setLoadingGrades] = useState(false);
 
     useEffect(() => {
-        fetch('http://localhost:8000/lms/students')
+        if (!user) return;
+        const teacherId = user.id || 1; // Fallback to 1 if no user
+        fetch(`http://localhost:8000/lms/students?teacherId=${teacherId}`)
             .then(res => res.json())
             .then(data => setStudents(data))
             .catch(err => console.error('Failed to fetch students', err));
-    }, []);
+    }, [user]);
 
     const handleOpenAssign = (student) => {
         setSelectedStudent(student);
@@ -89,6 +92,7 @@ export default function StudentList() {
                     <TableHead>
                         <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                             <TableCell>Name</TableCell>
+                            <TableCell>Class</TableCell>
                             <TableCell>Email</TableCell>
                             <TableCell>Persona</TableCell>
                             <TableCell align="right">Actions</TableCell>
@@ -98,6 +102,9 @@ export default function StudentList() {
                         {students.map((student) => (
                             <TableRow key={student.id} hover>
                                 <TableCell>{student.name}</TableCell>
+                                <TableCell>
+                                    <Chip label={student.class_name || 'N/A'} size="small" variant="outlined" />
+                                </TableCell>
                                 <TableCell>{student.email}</TableCell>
                                 <TableCell>
                                     <Chip

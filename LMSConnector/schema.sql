@@ -1,5 +1,28 @@
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role VARCHAR(20) DEFAULT 'STUDENT', -- 'ADMIN', 'TEACHER', 'STUDENT'
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS classes (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  teacher_id INTEGER -- Optional direct link, but mostly use junction table
+);
+
+CREATE TABLE IF NOT EXISTS teacher_classes (
+  teacher_id INTEGER REFERENCES users(id),
+  class_id INTEGER REFERENCES classes(id),
+  PRIMARY KEY (teacher_id, class_id)
+);
+
 CREATE TABLE IF NOT EXISTS students (
   id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  class_id INTEGER REFERENCES classes(id),
   name VARCHAR(100),
   email VARCHAR(100) UNIQUE,
   persona VARCHAR(50) DEFAULT 'Standard', -- 'Risk', 'Star', 'Standard'

@@ -41,7 +41,24 @@ exports.getAssignments = async (req, res) => {
 
 exports.getAllStudents = async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM students ORDER BY id ASC');
+        const { teacherId } = req.query;
+        let query = 'SELECT s.*, c.name as class_name FROM students s LEFT JOIN classes c ON s.class_id = c.id';
+        let params = [];
+
+        if (teacherId) {
+            query = `
+                SELECT s.*, c.name as class_name 
+                FROM students s 
+                JOIN classes c ON s.class_id = c.id
+                JOIN teacher_classes tc ON c.id = tc.class_id 
+                WHERE tc.teacher_id = $1
+            `;
+            params = [teacherId];
+        } else {
+            query += ' ORDER BY s.id ASC';
+        }
+
+        const result = await db.query(query, params);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
