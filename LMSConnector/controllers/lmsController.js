@@ -1,4 +1,8 @@
 const db = require('../config/db');
+const LocalLMSAdaptor = require('../services/LocalLMSAdaptor');
+
+const adaptor = new LocalLMSAdaptor();
+
 
 exports.getAllCourses = async (req, res) => {
     try {
@@ -85,12 +89,9 @@ exports.getGrades = async (req, res) => {
     try {
         const { studentId } = req.params;
         const result = await db.query(`
-            SELECT g.*, q.title as quiz_title, c.title as course_title 
+            SELECT g.*, q.title as quiz_title 
             FROM grades g
             JOIN quizzes q ON g.quiz_id = q.id
-            JOIN chapters ch ON q.chapter_id = ch.id
-            JOIN modules m ON ch.module_id = m.id
-            JOIN courses c ON m.course_id = c.id
             WHERE g.student_id = $1
             ORDER BY g.submitted_at DESC
         `, [studentId]);
@@ -167,6 +168,149 @@ exports.createCourse = async (req, res) => {
             [title, description, category, teacherId || 1]
         );
         res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.syncData = async (req, res) => {
+    try {
+        console.log("Starting LMS Sync...");
+        
+        // 1. Connect
+        const connected = await adaptor.connect();
+        if (!connected) {
+            return res.status(503).json({ error: "Failed to connect to LMS" });
+        }
+
+        // 2. Prepare Data (ETL)
+        // Note: successful preparation returns stdout usually
+        await adaptor.prepareData();
+
+        // 3. Fetch Result
+        const data = await adaptor.fetchData();
+
+        res.json({ message: "Sync Complete", data });
+    } catch (err) {
+        console.error("Sync Error:", err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
+// --- Content Management Controllers ---
+
+exports.createModule = async (req, res) => {
+    const { id } = req.params; // Course ID
+    const { title, orderIndex } = req.body;
+    try {
+        const result = await db.query(
+            'INSERT INTO modules (course_id, title, order_index) VALUES ($1, $2, $3) RETURNING *',
+            [id, title, orderIndex || 1]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.createChapter = async (req, res) => {
+    const { id } = req.params; // Module ID
+    const { title, contentType, contentUrl, durationMinutes, content } = req.body;
+    try {
+        const result = await db.query(
+            'INSERT INTO chapters (module_id, title, content_type, content_url, duration_minutes, content) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [id, title, contentType, contentUrl, durationMinutes || 10, content || null]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.updateModule = async (req, res) => {
+    const { id } = req.params;
+    const { title } = req.body;
+    try {
+        const result = await db.query(
+            'UPDATE modules SET title = $1 WHERE id = $2 RETURNING *',
+            [title, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.updateChapter = async (req, res) => {
+    const { id } = req.params;
+    const { title, contentType, contentUrl, durationMinutes, content } = req.body;
+    try {
+        const result = await db.query(
+            'UPDATE chapters SET title = COALESCE($1, title), content_type = COALESCE($2, content_type), content_url = COALESCE($3, content_url), duration_minutes = COALESCE($4, duration_minutes), content = COALESCE($5, content) WHERE id = $6 RETURNING *',
+            [title, contentType, contentUrl, durationMinutes, content, id]
+        );
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getAllQuizzes = async (req, res) => {
+    try {
+        const result = await db.query('SELECT * FROM quizzes ORDER BY created_at DESC');
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.updateQuiz = async (req, res) => {
+    const { id } = req.params;
+    const { title, topic, questions } = req.body;
+    try {
+        // 1. Update Quiz Title & Topic
+        await db.query('UPDATE quizzes SET title = $1, topic = $2, total_questions = $3 WHERE id = $4', [title, topic || 'General', questions.length, id]);
+        
+        // 2. Replace Questions (Simplest approach: Delete all, then insert new)
+        await db.query('DELETE FROM quiz_questions WHERE quiz_id = $1', [id]);
+        
+        for (const q of questions) {
+            await db.query(
+                `INSERT INTO quiz_questions (quiz_id, question_text, options, correct_option) 
+                 VALUES ($1, $2, $3, $4)`,
+                [id, q.question, JSON.stringify(q.options), q.correct]
+            );
+        }
+
+        res.json({ message: "Quiz Updated Successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.saveQuiz = async (req, res) => {
+    const { title, topic, questions } = req.body; // questions = [{question, options, correct}]
+    try {
+        // 1. Create Quiz
+        const quizResult = await db.query(
+            'INSERT INTO quizzes (title, topic, total_questions) VALUES ($1, $2, $3) RETURNING *',
+            [title, topic || 'General', questions.length]
+        );
+        const quizId = quizResult.rows[0].id; // ...
+
+        // 2. Insert Questions
+        for (const q of questions) {
+            await db.query(
+                `INSERT INTO quiz_questions (quiz_id, question_text, options, correct_option) 
+                 VALUES ($1, $2, $3, $4)`,
+                [quizId, q.question, JSON.stringify(q.options), q.correct]
+            );
+        }
+
+        res.json({ id: quizId, message: "Quiz Saved" });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });

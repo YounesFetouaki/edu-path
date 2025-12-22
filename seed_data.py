@@ -14,27 +14,33 @@ except ImportError:
         def paragraph(self): return "Lorem ipsum content for testing."
         def sentence(self): return "Short sentence description."
         def image_url(self): return "http://placehold.it/200x200"
+        def date_this_year(self): return datetime.now() - timedelta(days=random.randint(0, 365))
     fake = Faker()
 
 import psycopg2
 from psycopg2 import sql
 
+from sqlalchemy import create_engine
+
 # DB Config (Environment variables or default for Docker internal)
 DB_USER = os.getenv('POSTGRES_USER', 'admin')
 DB_PASS = os.getenv('POSTGRES_PASSWORD', 'adminpassword')
-DB_HOST = os.getenv('DB_HOST', 'postgres')
-DB_PORT = os.getenv('DB_PORT', '5432')
+DB_HOST = os.getenv('DB_HOST', 'localhost') 
+
+# Logic to handle local execution vs docker
+if DB_HOST == 'localhost':
+    # DB_HOST = '127.0.0.1' 
+    DB_PORT = os.getenv('DB_PORT', '5433') 
+else:
+    DB_PORT = os.getenv('DB_PORT', '5432') 
+
 DB_NAME = os.getenv('POSTGRES_DB', 'edupath_db')
+DATABASE_URI = f'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
 def get_db_connection():
     try:
-        conn = psycopg2.connect(
-            host=DB_HOST,
-            database=DB_NAME,
-            user=DB_USER,
-            password=DB_PASS,
-            port=DB_PORT
-        )
+        engine = create_engine(DATABASE_URI)
+        conn = engine.raw_connection()
         return conn
     except Exception as e:
         print(f"Error connecting to DB: {e}")
@@ -107,11 +113,59 @@ def seed_courses(cur, count=10):
                     (title, desc, cat, thumb))
         course_id = cur.fetchone()[0]
         
+        
         # Seed Modules
-        for m in range(random.randint(3, 8)):
+        for m in range(random.randint(2, 5)):
             cur.execute("INSERT INTO modules (course_id, title, order_index) VALUES (%s, %s, %s) RETURNING id",
                         (course_id, f"Module {m+1}: {fake.sentence()}"[:40], m))
             mod_id = cur.fetchone()[0]
+
+            # Seed Chapters
+            for ch in range(random.randint(2, 4)):
+                 cur.execute("INSERT INTO chapters (module_id, title, content_type, content_url, duration_minutes) VALUES (%s, %s, %s, %s, %s)",
+                        (mod_id, f"Chapter {ch+1}: {fake.sentence()}"[:40], 'video', "https://www.youtube.com/watch?v=dQw4w9WgXcQ", 15))
+
+def seed_quizzes(cur, count=15):
+    print(f"Seeding {count} quizzes...")
+    cur.execute("SELECT COUNT(*) FROM quizzes")
+    count_exist = cur.fetchone()[0]
+    if count_exist > 0:
+        print("Quizzes already exist.")
+        return
+
+    topics = ['React Hooks', 'Python Basics', 'History of Rome', 'Quantum Physics', 'Linear Algebra']
+    
+    for i in range(count):
+        topic = random.choice(topics)
+        title = f"{topic} Quiz {i+1}"
+        cur.execute("""
+            INSERT INTO quizzes (title, topic, total_questions, created_at)
+            VALUES (%s, %s, %s, %s) RETURNING id
+        """, (title, topic, 5, fake.date_this_year()))
+
+def seed_grades(cur):
+    print("Seeding grades for students...")
+    cur.execute("SELECT id FROM students")
+    students = [row[0] for row in cur.fetchall()]
+    
+    cur.execute("SELECT id, title FROM quizzes")
+    quizzes = cur.fetchall()
+    
+    if not students or not quizzes:
+        return
+
+    for s_id in students:
+        # Assign 2-5 grades per student
+        student_quizzes = random.sample(quizzes, k=random.randint(2, 5))
+        for q_id, q_title in student_quizzes:
+            score = random.randint(40, 100)
+            passed = score >= 60
+            submitted = fake.date_this_year()
+            
+            cur.execute("""
+                INSERT INTO grades (student_id, quiz_id, quiz_title, score, max_score, submitted_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (s_id, q_id, q_title, score, 100, submitted))
 
 def main():
     print("Waiting for DB...")
@@ -129,10 +183,13 @@ def main():
     cur.execute("DROP TABLE IF EXISTS students CASCADE;")
     cur.execute("DROP TABLE IF EXISTS users CASCADE;")
     cur.execute("DROP TABLE IF EXISTS courses CASCADE;") # might as well refresh everything
+    cur.execute("DROP TABLE IF EXISTS chapters CASCADE;")
     cur.execute("DROP TABLE IF EXISTS modules CASCADE;")
     cur.execute("DROP TABLE IF EXISTS student_profiles CASCADE;")
     cur.execute("DROP TABLE IF EXISTS teacher_classes CASCADE;")
     cur.execute("DROP TABLE IF EXISTS classes CASCADE;")
+    cur.execute("DROP TABLE IF EXISTS quizzes CASCADE;")
+    cur.execute("DROP TABLE IF EXISTS grades CASCADE;")
     
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -174,7 +231,8 @@ def main():
       title VARCHAR(100),
       description TEXT,
       category VARCHAR(50),
-      thumbnail_url VARCHAR(255)
+      thumbnail_url VARCHAR(255),
+      teacher_id INTEGER
     );
     """)
     cur.execute("""
@@ -183,6 +241,41 @@ def main():
       course_id INTEGER REFERENCES courses(id),
       title VARCHAR(100),
       order_index INTEGER
+    );
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS chapters (
+      id SERIAL PRIMARY KEY,
+      module_id INTEGER REFERENCES modules(id),
+      title VARCHAR(100),
+      content_type VARCHAR(50) DEFAULT 'video',
+      content_url VARCHAR(255),
+      duration_minutes INTEGER DEFAULT 10,
+      content TEXT,
+      video_url VARCHAR(255)
+    );
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS quizzes (
+      id SERIAL PRIMARY KEY,
+      title VARCHAR(100),
+      topic VARCHAR(100),
+      total_questions INTEGER DEFAULT 5,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS grades (
+      id SERIAL PRIMARY KEY,
+      student_id INTEGER REFERENCES students(id),
+      quiz_id INTEGER REFERENCES quizzes(id),
+      quiz_title VARCHAR(100),
+      score INTEGER,
+      max_score INTEGER,
+      submitted_at TIMESTAMP
     );
     """)
     
@@ -234,6 +327,8 @@ def main():
         """, (u_id, class_id, name, email, persona))
 
     seed_courses(cur, count=20)
+    seed_quizzes(cur, count=15)
+    seed_grades(cur)
     
     # Seed student_profiles
     print("Seeding student_profiles...")

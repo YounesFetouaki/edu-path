@@ -1,9 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 class ApiService {
-  // Use localhost for Web. For Android Emulator use 10.0.2.2
-  static const String baseUrl = 'http://localhost:8000';
+  String get baseUrl {
+    if (kIsWeb) return 'http://localhost:8000';
+    if (Platform.isAndroid) return 'http://10.0.2.2:8000';
+    return 'http://localhost:8000';
+  }
 
   Future<Map<String, dynamic>> login(String username, String password) async {
     final url = Uri.parse('$baseUrl/auth/login');

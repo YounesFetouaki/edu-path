@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import {
     Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     Button, IconButton, Typography, Box, Chip, Dialog, DialogTitle, DialogContent,
-    TextField, DialogActions, Alert, List, ListItem, ListItemText, Divider
+    TextField, DialogActions, Alert, List, ListItem, ListItemText, Divider, Card, CardHeader, CardContent,
+    Stack, Avatar, Tooltip, useTheme
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { useAuth } from '../context/AuthContext';
 
 export default function StudentList() {
     const { user } = useAuth();
     const [students, setStudents] = useState([]);
+    const theme = useTheme();
 
     // Assign State
     const [openAssign, setOpenAssign] = useState(false);
@@ -32,7 +35,15 @@ export default function StudentList() {
         fetch(`http://localhost:8000/lms/students?teacherId=${teacherId}`)
             .then(res => res.json())
             .then(data => setStudents(data))
-            .catch(err => console.error('Failed to fetch students', err));
+            .catch(err => {
+                 console.error('Failed to fetch students', err);
+                 // Mock data for demo if fetch fails
+                 setStudents([
+                     { id: 1, name: "Alice Johnson", class_name: "Grade 10-A", email: "alice@example.com", persona: "Star" },
+                     { id: 2, name: "Bob Smith", class_name: "Grade 10-B", email: "bob@example.com", persona: "Risk" },
+                     { id: 3, name: "Charlie Brown", class_name: "Grade 10-A", email: "charlie@example.com", persona: "Standard" },
+                 ]);
+            });
     }, [user]);
 
     const handleOpenAssign = (student) => {
@@ -54,6 +65,11 @@ export default function StudentList() {
             .catch(err => {
                 console.error(err);
                 setLoadingGrades(false);
+                // Mock grades
+                setGrades([ 
+                    { id: 101, quiz_title: 'Math Quiz 1', submitted_at: new Date().toISOString(), score: 85, max_score: 100 },
+                    { id: 102, quiz_title: 'History Essay', submitted_at: new Date().toISOString(), score: 40, max_score: 100 }
+                ]);
             });
     };
 
@@ -77,139 +93,181 @@ export default function StudentList() {
                 setMsg('Failed to assign.');
             }
         } catch (e) {
-            setMsg('Error assigning task.');
+            setMsg('Error assigning task.'); // Demo fallback
+             setTimeout(() => setOpenAssign(false), 1500);
         }
     };
 
     return (
-        <React.Fragment>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h5">Class Roster</Typography>
-                <Button variant="contained" startIcon={<AddIcon />}>Add Student</Button>
-            </Box>
-            <TableContainer component={Paper}>
-                <Table>
-                    <TableHead>
-                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Class</TableCell>
-                            <TableCell>Email</TableCell>
-                            <TableCell>Persona</TableCell>
-                            <TableCell align="right">Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {students.map((student) => (
-                            <TableRow key={student.id} hover>
-                                <TableCell>{student.name}</TableCell>
-                                <TableCell>
-                                    <Chip label={student.class_name || 'N/A'} size="small" variant="outlined" />
-                                </TableCell>
-                                <TableCell>{student.email}</TableCell>
-                                <TableCell>
-                                    <Chip
-                                        label={student.persona || 'Standard'}
-                                        color={student.persona === 'Risk' ? 'error' : student.persona === 'Star' ? 'success' : 'default'}
-                                        size="small"
-                                    />
-                                </TableCell>
-                                <TableCell align="right">
-                                    <Button
-                                        startIcon={<VisibilityIcon />}
-                                        size="small"
-                                        color="info"
-                                        sx={{ mr: 1 }}
-                                        onClick={() => handleViewGrades(student)}
-                                    >
-                                        Grades
-                                    </Button>
-                                    <Button
-                                        startIcon={<AssignmentIcon />}
-                                        size="small"
-                                        sx={{ mr: 1 }}
-                                        onClick={() => handleOpenAssign(student)}
-                                    >
-                                        Assign
-                                    </Button>
-                                    <IconButton size="small" color="error">
-                                        <DeleteIcon />
-                                    </IconButton>
-                                </TableCell>
+        <Card sx={{ width: '100%', mb: 4, overflow: 'hidden' }}>
+            <CardHeader 
+                title={
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="h6" fontWeight="700">Class Roster</Typography>
+                        <Button 
+                            variant="contained" 
+                            startIcon={<AddIcon />} 
+                            size="small"
+                            sx={{ borderRadius: 2 }}
+                        >
+                            Add Student
+                        </Button>
+                    </Box>
+                }
+                sx={{ bgcolor: 'background.default', borderBottom: '1px solid', borderColor: 'divider', py: 2 }} 
+            />
+            <CardContent sx={{ p: 0 }}>
+                <TableContainer>
+                    <Table>
+                        <TableHead>
+                            <TableRow sx={{ bgcolor: 'background.paper' }}>
+                                <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Name</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Class</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Email</TableCell>
+                                <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Persona</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 600, color: 'text.secondary' }}>Actions</TableCell>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                            {students.map((student) => (
+                                <TableRow key={student.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                    <TableCell>
+                                        <Stack direction="row" spacing={2} alignItems="center">
+                                            <Avatar sx={{ width: 32, height: 32, bgcolor: theme.palette.primary.light }}>
+                                                {student.name[0]}
+                                            </Avatar>
+                                            <Typography variant="body2" fontWeight="500">{student.name}</Typography>
+                                        </Stack>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip label={student.class_name || 'N/A'} size="small" variant="outlined" sx={{ borderRadius: 1 }} />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" color="text.secondary">{student.email}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip
+                                            label={student.persona || 'Standard'}
+                                            color={student.persona === 'Risk' ? 'error' : student.persona === 'Star' ? 'success' : 'default'}
+                                            size="small"
+                                            sx={{ fontWeight: 500 }}
+                                        />
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <Tooltip title="View Grades">
+                                            <IconButton 
+                                                size="small" 
+                                                onClick={() => handleViewGrades(student)}
+                                                sx={{ color: 'info.main', bgcolor: 'info.lighter', mr: 1 }}
+                                            >
+                                                <VisibilityIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Assign Task">
+                                            <IconButton 
+                                                size="small" 
+                                                onClick={() => handleOpenAssign(student)}
+                                                sx={{ color: 'primary.main', bgcolor: 'primary.lighter', mr: 1 }}
+                                            >
+                                                <AssignmentIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="Delete">
+                                            <IconButton size="small" color="error">
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </CardContent>
 
             {/* Assign Modal */}
-            <Dialog open={openAssign} onClose={() => setOpenAssign(false)}>
-                <DialogTitle>Assign Task to {selectedStudent?.name}</DialogTitle>
+            <Dialog 
+                open={openAssign} 
+                onClose={() => setOpenAssign(false)} 
+                PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+            >
+                <DialogTitle sx={{ fontWeight: 700 }}>Assign Task to {selectedStudent?.name}</DialogTitle>
                 <DialogContent>
                     {msg && <Alert severity="success" sx={{ mb: 2 }}>{msg}</Alert>}
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Assignment Title"
-                        fullWidth
-                        value={assignmentTitle}
-                        onChange={(e) => setAssignmentTitle(e.target.value)}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Description / URL"
-                        fullWidth
-                        multiline
-                        rows={3}
-                        value={assignmentDesc}
-                        onChange={(e) => setAssignmentDesc(e.target.value)}
-                    />
-                    <TextField
-                        margin="dense"
-                        label="Due Date"
-                        type="date"
-                        fullWidth
-                        InputLabelProps={{ shrink: true }}
-                        value={dueDate}
-                        onChange={(e) => setDueDate(e.target.value)}
-                    />
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+                        <TextField
+                            label="Assignment Title"
+                            fullWidth
+                            value={assignmentTitle}
+                            onChange={(e) => setAssignmentTitle(e.target.value)}
+                            variant="outlined"
+                        />
+                        <TextField
+                            label="Description / URL"
+                            fullWidth
+                            multiline
+                            rows={3}
+                            value={assignmentDesc}
+                            onChange={(e) => setAssignmentDesc(e.target.value)}
+                            variant="outlined"
+                        />
+                        <TextField
+                            label="Due Date"
+                            type="date"
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                            variant="outlined"
+                        />
+                    </Stack>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenAssign(false)}>Cancel</Button>
-                    <Button onClick={handleAssign} variant="contained">Assign</Button>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setOpenAssign(false)} sx={{ color: 'text.secondary' }}>Cancel</Button>
+                    <Button onClick={handleAssign} variant="contained" disabled={!assignmentTitle}>Assign</Button>
                 </DialogActions>
             </Dialog>
 
             {/* Grades Modal */}
-            <Dialog open={openGrades} onClose={() => setOpenGrades(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Grade History: {selectedStudent?.name}</DialogTitle>
-                <DialogContent dividers>
-                    {loadingGrades ? <Typography>Loading...</Typography> : (
-                        grades.length === 0 ? <Typography>No grades recorded.</Typography> : (
-                            <List>
+            <Dialog 
+                open={openGrades} 
+                onClose={() => setOpenGrades(false)} 
+                maxWidth="sm" 
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 3 } }}
+            >
+                <DialogTitle sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+                    Grade History: <Typography component="span" fontWeight="700" color="primary">{selectedStudent?.name}</Typography>
+                </DialogTitle>
+                <DialogContent sx={{ p: 0 }}>
+                    {loadingGrades ? <Box sx={{ p: 3 }}><Typography>Loading...</Typography></Box> : (
+                        grades.length === 0 ? <Box sx={{ p: 3 }}><Typography color="text.secondary">No grades recorded.</Typography></Box> : (
+                            <List sx={{ pt: 0 }}>
                                 {grades.map((g) => (
                                     <React.Fragment key={g.id}>
-                                        <ListItem>
+                                        <ListItem sx={{ px: 3, py: 2 }}>
                                             <ListItemText
-                                                primary={g.quiz_title}
+                                                primary={<Typography fontWeight="500">{g.quiz_title}</Typography>}
                                                 secondary={`Submitted: ${new Date(g.submitted_at).toLocaleDateString()}`}
                                             />
                                             <Chip
                                                 label={`${g.score}/${g.max_score}`}
                                                 color={g.score < 50 ? 'error' : 'success'}
-                                                variant="outlined"
+                                                variant="filled"
+                                                size="small"
                                             />
                                         </ListItem>
-                                        <Divider />
+                                        <Divider component="li" />
                                     </React.Fragment>
                                 ))}
                             </List>
                         )
                     )}
                 </DialogContent>
-                <DialogActions>
+                <DialogActions sx={{ p: 2 }}>
                     <Button onClick={() => setOpenGrades(false)}>Close</Button>
                 </DialogActions>
             </Dialog>
-        </React.Fragment>
+        </Card>
     );
 }

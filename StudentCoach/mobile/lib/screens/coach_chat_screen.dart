@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/data_service.dart';
+import 'quiz_screen.dart';
 
 class CoachChatScreen extends StatefulWidget {
   const CoachChatScreen({super.key});
@@ -72,12 +73,24 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
     
     try {
       final quiz = await _dataService.generateQuiz(topic);
+      
+      // Navigate to full-screen Quiz UI
+      if (mounted) {
+         Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => QuizScreen(
+                    quizTitle: '$topic Quiz',
+                    aiQuestions: quiz,
+                )
+            )
+         );
+      }
+      
       setState(() {
-        _isQuizMode = true;
-        _currentQuiz = quiz;
-        _currentQuestionIndex = 0;
-        _messages.add({'text': 'Quiz Ready! Question 1:', 'isUser': false});
+        _messages.add({'text': 'Quiz launched! Good luck!', 'isUser': false});
       });
+      
     } catch (e) {
       setState(() {
         _messages.add({'text': 'Failed to generate quiz. Try again.', 'isUser': false});
@@ -86,23 +99,7 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
   }
 
   void _handleAnswer(int optionIndex) {
-    final question = _currentQuiz[_currentQuestionIndex];
-    final isCorrect = optionIndex == question['correct'];
-    
-    setState(() {
-      _messages.add({
-        'text': isCorrect ? '✅ Correct!' : '❌ Incorrect. The answer was ${question['options'][question['correct']]}', 
-        'isUser': false
-      });
-      
-      if (_currentQuestionIndex < _currentQuiz.length - 1) {
-        _currentQuestionIndex++;
-        // Trigger next question
-      } else {
-        _isQuizMode = false;
-        _messages.add({'text': '🎉 Quiz Complete! Great job!', 'isUser': false});
-      }
-    });
+      // Deprecated: Logic moved to QuizScreen
   }
 
   @override
@@ -112,36 +109,8 @@ class _CoachChatScreenState extends State<CoachChatScreen> {
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: _messages.length + (_isQuizMode ? 1 : 0),
+            itemCount: _messages.length,
             itemBuilder: (context, index) {
-              if (_isQuizMode && index == _messages.length) {
-                // Render Current Quiz Question
-                final q = _currentQuiz[_currentQuestionIndex];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  color: Colors.blue.shade50,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Question ${_currentQuestionIndex + 1}: ${q['question']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        ...List.generate(q['options'].length, (i) => 
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: ElevatedButton(
-                              onPressed: () => _handleAnswer(i),
-                              child: Text(q['options'][i]),
-                            ),
-                          )
-                        )
-                      ],
-                    ),
-                  ),
-                );
-              }
-
               final msg = _messages[index];
               final isUser = msg['isUser'];
               return Align(

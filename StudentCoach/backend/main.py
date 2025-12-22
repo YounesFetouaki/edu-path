@@ -97,18 +97,20 @@ async def chat_endpoint(request: ChatRequest = Body(...)):
     
     # Check for Real API Key
     api_key = os.getenv("OPENAI_API_KEY")
+    base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    model = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
     
     if HAS_OPENAI and api_key and api_key.startswith("sk-"):
         try:
-            client = OpenAI(api_key=api_key)
+            client = OpenAI(api_key=api_key, base_url=base_url)
             completion = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=model,
                 messages=[
                     {"role": "system", "content": "You are a helpful student coach for a CS student learning AI."},
                     {"role": "user", "content": request.message}
                 ]
             )
-            return {"response": completion.choices[0].message.content, "source": "OpenAI"}
+            return {"response": completion.choices[0].message.content, "source": f"AI ({model})"}
         except Exception as e:
             print(f"OpenAI Error: {e}")
             # Fallback to offline if API fails
@@ -120,26 +122,31 @@ async def chat_endpoint(request: ChatRequest = Body(...)):
 
 class QuizRequest(BaseModel):
     topic: str
+    count: int = 5
 
 @app.post("/quiz")
 async def generate_quiz_endpoint(request: QuizRequest = Body(...)):
     topic = request.topic.lower()
-    print(f"Generating quiz for: {topic}")
+    count = request.count
+    print(f"Generating quiz for: {topic} ({count} questions)")
 
-    # 1. Try OpenAI
+    # 1. Try OpenAI/DeepSeek
     api_key = os.getenv("OPENAI_API_KEY")
+    base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    model = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
+
     if HAS_OPENAI and api_key and api_key.startswith("sk-"):
         try:
-            client = OpenAI(api_key=api_key)
+            client = OpenAI(api_key=api_key, base_url=base_url)
             prompt = f"""
-            Generate a quiz about {topic} with 5 multiple-choice questions.
+            Generate a quiz about {topic} with {count} multiple-choice questions.
             Return ONLY raw JSON. Format:
             [
               {{"question": "Text", "options": ["A", "B", "C", "D"], "correct": 0}}
             ]
             """
             completion = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=model,
                 messages=[{"role": "user", "content": prompt}]
             )
             content = completion.choices[0].message.content

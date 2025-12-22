@@ -5,7 +5,7 @@ import os
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # DB Config
 DB_USER = os.getenv('POSTGRES_USER', 'admin')

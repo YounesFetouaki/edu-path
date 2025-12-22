@@ -27,13 +27,19 @@ app.use('/lms', createProxyMiddleware({
 // StudentCoach Backend (Python)
 app.use('/student', createProxyMiddleware({
     target: process.env.STUDENT_COACH_URL || 'http://localhost:5000',
-    changeOrigin: true
+    changeOrigin: true,
+    pathRewrite: {
+        '^/student': '', // rewrite path
+    },
 }));
 
 // Profile Service (Python)
 app.use('/profiler', createProxyMiddleware({
     target: process.env.PROFILER_URL || 'http://localhost:5001',
-    changeOrigin: true
+    changeOrigin: true,
+    pathRewrite: {
+        '^/profiler': '', // rewrite path
+    },
 }));
 
 // Path Predictor (Python)

@@ -18,6 +18,15 @@ def run_etl():
     print("Extracting data...")
     logs_df = pd.read_sql("SELECT * FROM student_logs", engine)
     students_df = pd.read_sql("SELECT * FROM students", engine)
+    
+    # Extract external dataset (e.g., from Kaggle)
+    csv_file_path = 'external_data.csv'
+    if os.path.exists(csv_file_path):
+        print(f"Loading external dataset from {csv_file_path}...")
+        external_df = pd.read_csv(csv_file_path)
+    else:
+        print(f"Warning: {csv_file_path} not found. Creating empty placeholder.")
+        external_df = pd.DataFrame(columns=['student_id', 'additional_score', 'study_hours_external'])
 
     if logs_df.empty:
         print("No logs found. Skipping transformation.")
@@ -45,7 +54,12 @@ def run_etl():
     
     # Merge with student info
     final_df = pd.merge(students_df[['student_id', 'email']], engagement, on='student_id', how='left')
-    final_df[['total_actions', 'total_time', 'risk_factor']] = final_df[['total_actions', 'total_time', 'risk_factor']].fillna(0)
+    
+    # Merge with External Data
+    final_df = pd.merge(final_df, external_df, on='student_id', how='left')
+    
+    # Fill NaN values for new columns
+    final_df[['total_actions', 'total_time', 'risk_factor', 'additional_score', 'study_hours_external']] = final_df[['total_actions', 'total_time', 'risk_factor', 'additional_score', 'study_hours_external']].fillna(0)
     final_df['avg_score'] = final_df['avg_score'].fillna(0)
 
     # 3. Load

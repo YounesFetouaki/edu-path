@@ -121,6 +121,10 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
+      # OpenAI Config
+      OPENAI_API_KEY: "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"
+      # OPENAI_BASE_URL: "https://api.openai.com/v1" # Defaults to OpenAI
+      # LLM_MODEL: "gpt-3.5-turbo" # Defaults to gpt-3.5-turbo
     depends_on:
       - postgres
 
