@@ -10,7 +10,11 @@ router.post('/courses', lmsController.createCourse); // NEW: Create Course
 router.get('/assignments/:studentId', lmsController.getAssignments);
 router.post('/assign', lmsController.assignTask);
 
+// router.get('/students', lmsController.getAllStudents); is usually GET
 router.get('/students', lmsController.getAllStudents);
+router.post('/students', lmsController.createStudent); // NEW
+router.get('/assignments/teacher/:teacherId', lmsController.getAssignmentsByTeacher); // NEW
+router.get('/classes/teacher/:teacherId', lmsController.getClassesByTeacher); // NEW
 
 // Grades
 router.get('/grades/:studentId', lmsController.getGrades);

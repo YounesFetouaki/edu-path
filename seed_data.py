@@ -87,7 +87,7 @@ def seed_students(cur, user_data):
         if role != 'STUDENT': continue
         
         name = fake.name()
-        persona = random.choice(['Risk', 'Star', 'Standard', 'Risk', 'Standard'])
+        persona = random.choice(['At Risk', 'High Achiever', 'Standard', 'At Risk', 'Standard'])
         
         cur.execute("""
             INSERT INTO students (user_id, name, email, persona)
@@ -143,6 +143,34 @@ def seed_quizzes(cur, count=15):
             VALUES (%s, %s, %s, %s) RETURNING id
         """, (title, topic, 5, fake.date_this_year()))
 
+def seed_assignments(cur, class_ids, count_per_class=3):
+    print(f"Seeding assignments for {len(class_ids)} classes...")
+    
+    if not class_ids:
+        print("No classes provided.")
+        return
+
+    titles = ["React Project", "History Essay", "Lab Report", "Algorithm Analysis", "Art Portfolio"]
+    
+    for c_id in class_ids:
+        for _ in range(count_per_class):
+            title = f"{random.choice(titles)} - {fake.word().capitalize()}"
+            desc = fake.paragraph()
+            due = fake.date_this_year() + timedelta(days=random.randint(5, 30))
+            
+            # Get teacher for this class
+            cur.execute("SELECT teacher_id FROM teacher_classes WHERE class_id = %s", (c_id,))
+            res = cur.fetchone()
+            t_id = res[0] if res else 1 # Fallback
+            
+            try:
+                cur.execute("""
+                    INSERT INTO assignments (class_id, title, description, due_date, teacher_id)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (c_id, title, desc, due, t_id))
+            except Exception as e:
+                print(f"Failed to insert assignment: {e}")
+
 def seed_grades(cur):
     print("Seeding grades for students...")
     cur.execute("SELECT id FROM students")
@@ -189,6 +217,7 @@ def main():
     cur.execute("DROP TABLE IF EXISTS teacher_classes CASCADE;")
     cur.execute("DROP TABLE IF EXISTS classes CASCADE;")
     cur.execute("DROP TABLE IF EXISTS quizzes CASCADE;")
+    cur.execute("DROP TABLE IF EXISTS assignments CASCADE;")
     cur.execute("DROP TABLE IF EXISTS grades CASCADE;")
     
     cur.execute("""
@@ -268,6 +297,19 @@ def main():
     """)
 
     cur.execute("""
+    CREATE TABLE IF NOT EXISTS assignments (
+      id SERIAL PRIMARY KEY,
+      class_id INTEGER REFERENCES classes(id),
+      title VARCHAR(255),
+      description TEXT,
+      due_date TIMESTAMP,
+      teacher_id INTEGER,
+      status VARCHAR(50) DEFAULT 'pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS grades (
       id SERIAL PRIMARY KEY,
       student_id INTEGER REFERENCES students(id),
@@ -317,7 +359,7 @@ def main():
         if role != 'STUDENT': continue
         
         name = fake.name()
-        persona = random.choice(['Risk', 'Star', 'Standard', 'Risk', 'Standard'])
+        persona = random.choice(['At Risk', 'High Achiever', 'Standard', 'At Risk', 'Standard'])
         class_id = random.choice(class_ids) # Assign to random class
         
         cur.execute("""
@@ -328,6 +370,7 @@ def main():
 
     seed_courses(cur, count=20)
     seed_quizzes(cur, count=15)
+    seed_assignments(cur, class_ids)
     seed_grades(cur)
     
     # Seed student_profiles
@@ -338,13 +381,14 @@ def main():
         s_id, email, persona = s
         # Map persona to simple cluster
         cluster = 0
-        if persona == 'Risk': cluster = 2
-        elif persona == 'Star': cluster = 1
+        if persona == 'At Risk': cluster = 2
+        elif persona == 'High Achiever': cluster = 1
         
         cur.execute("INSERT INTO student_profiles (student_id, email, cluster_label, profile_type) VALUES (%s, %s, %s, %s) ON CONFLICT (student_id) DO NOTHING",
                     (s_id, email, cluster, persona))
     
     print("Seeding Complete!")
+
     cur.close()
     conn.close()
 

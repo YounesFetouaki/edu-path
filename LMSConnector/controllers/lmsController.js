@@ -36,7 +36,14 @@ exports.getCourseDetails = async (req, res) => {
 exports.getAssignments = async (req, res) => {
     const { studentId } = req.params;
     try {
-        const result = await db.query('SELECT * FROM assignments WHERE student_id = $1 ORDER BY due_date ASC', [studentId]);
+        // 1. Get Student's Class
+        const student = await db.query('SELECT class_id FROM students WHERE id = $1', [studentId]);
+        if (student.rows.length === 0) return res.status(404).json({ error: 'Student not found' });
+        
+        const classId = student.rows[0].class_id;
+        
+        // 2. Fetch Assignments for that Class
+        const result = await db.query('SELECT * FROM assignments WHERE class_id = $1 ORDER BY due_date ASC', [classId]);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -70,12 +77,12 @@ exports.getAllStudents = async (req, res) => {
 };
 
 exports.assignTask = async (req, res) => {
-    const { studentId, title, description, teacherId, dueDate } = req.body;
+    const { classId, title, description, teacherId, dueDate } = req.body;
     try {
         const result = await db.query(
-            `INSERT INTO assignments (student_id, title, description, due_date, teacher_id) 
+            `INSERT INTO assignments (class_id, title, description, due_date, teacher_id) 
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [studentId, title, description, dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), teacherId]
+            [classId, title, description, dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), teacherId]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -162,10 +169,10 @@ exports.getQuiz = async (req, res) => {
 
 exports.createCourse = async (req, res) => {
     try {
-        const { title, description, category, teacherId } = req.body;
+        const { title, description, category, teacherId, thumbnail_url } = req.body;
         const result = await db.query(
-            'INSERT INTO courses (title, description, category, teacher_id) VALUES ($1, $2, $3, $4) RETURNING *',
-            [title, description, category, teacherId || 1]
+            'INSERT INTO courses (title, description, category, teacher_id, thumbnail_url) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [title, description, category, teacherId || 1, thumbnail_url]
         );
         res.json(result.rows[0]);
     } catch (err) {
@@ -311,6 +318,69 @@ exports.saveQuiz = async (req, res) => {
         }
 
         res.json({ id: quizId, message: "Quiz Saved" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getAssignmentsByTeacher = async (req, res) => {
+    const { teacherId } = req.params;
+    try {
+        const result = await db.query(`
+            SELECT a.*, c.name as class_name 
+            FROM assignments a
+            JOIN classes c ON a.class_id = c.id
+            WHERE a.teacher_id = $1
+            ORDER BY a.created_at DESC
+        `, [teacherId]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.getClassesByTeacher = async (req, res) => {
+    const { teacherId } = req.params;
+    try {
+        const result = await db.query(`
+            SELECT c.* 
+            FROM classes c
+            JOIN teacher_classes tc ON c.id = tc.class_id
+            WHERE tc.teacher_id = $1
+        `, [teacherId]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.createStudent = async (req, res) => {
+    const { name, email, classId } = req.body;
+    try {
+        // 1. Create User
+        // Use a default hashed password (e.g., '123456' hashed or plain if strict auth not enforced here)
+        // Ideally call Auth Service, but direct DB access for now
+        const userResult = await db.query(
+            "INSERT INTO users (name, email, role, password_hash) VALUES ($1, $2, 'student', '$2b$12$eX6lq.Z1.h1.u1.r1.p1.o1.u1.t1.e1.r1.s1.e1.c1.r1.e1.t1') RETURNING id",
+            [name, email]
+        );
+        const userId = userResult.rows[0].id;
+
+        // 2. Create Student
+        const studentResult = await db.query(
+            "INSERT INTO students (user_id, class_id) VALUES ($1, $2) RETURNING id",
+            [userId, classId]
+        );
+        const studentId = studentResult.rows[0].id;
+
+        // 3. Create Default Profile
+        await db.query(
+            "INSERT INTO student_profiles (student_id, learning_style, personality_type, strengths, challenges, goals, risk_level) VALUES ($1, 'Visual', 'Introvert', 'Analysis', 'Time Management', 'Improve Grades', 'Standard')",
+            [studentId]
+        );
+
+        res.json({ id: studentId, message: "Student Created successfully" });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });

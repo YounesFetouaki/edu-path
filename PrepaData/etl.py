@@ -53,7 +53,9 @@ def run_etl():
     engagement.loc[(engagement['avg_score'] >= 50) & (engagement['avg_score'] < 70), 'risk_factor'] = 0.5
     
     # Merge with student info
-    final_df = pd.merge(students_df[['student_id', 'email']], engagement, on='student_id', how='left')
+    # 'students' table has 'id', renaming to 'student_id' for consistency
+    students_mapped = students_df[['id', 'email']].rename(columns={'id': 'student_id'})
+    final_df = pd.merge(students_mapped, engagement, on='student_id', how='left')
     
     # Merge with External Data
     final_df = pd.merge(final_df, external_df, on='student_id', how='left')

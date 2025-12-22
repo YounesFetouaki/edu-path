@@ -23,6 +23,7 @@ export default function StudentList() {
     const [assignmentDesc, setAssignmentDesc] = useState('');
     const [dueDate, setDueDate] = useState('');
     const [msg, setMsg] = useState('');
+    const [openCreateStudent, setOpenCreateStudent] = useState(false);
 
     // Grades State
     const [openGrades, setOpenGrades] = useState(false);
@@ -109,6 +110,7 @@ export default function StudentList() {
                             startIcon={<AddIcon />} 
                             size="small"
                             sx={{ borderRadius: 2 }}
+                            onClick={() => setOpenCreateStudent(true)}
                         >
                             Add Student
                         </Button>
@@ -191,7 +193,8 @@ export default function StudentList() {
                 onClose={() => setOpenAssign(false)} 
                 PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
             >
-                <DialogTitle sx={{ fontWeight: 700 }}>Assign Task to {selectedStudent?.name}</DialogTitle>
+                {/* ... existing assign modal content ... */}
+                 <DialogTitle sx={{ fontWeight: 700 }}>Assign Task to {selectedStudent?.name}</DialogTitle>
                 <DialogContent>
                     {msg && <Alert severity="success" sx={{ mb: 2 }}>{msg}</Alert>}
                     <Stack spacing={2} sx={{ mt: 1 }}>
@@ -228,6 +231,19 @@ export default function StudentList() {
                 </DialogActions>
             </Dialog>
 
+             {/* CREATE STUDENT DIALOG - NEW */}
+             <CreateStudentDialog 
+                open={openCreateStudent} 
+                onClose={() => setOpenCreateStudent(false)} 
+                onCreated={() => {
+                    // refresh list?
+                    const teacherId = user?.id || 1; 
+                    fetch(`http://localhost:8000/lms/students?teacherId=${teacherId}`)
+                        .then(res => res.json())
+                        .then(data => setStudents(data));
+                }}
+             />
+
             {/* Grades Modal */}
             <Dialog 
                 open={openGrades} 
@@ -236,6 +252,7 @@ export default function StudentList() {
                 fullWidth
                 PaperProps={{ sx: { borderRadius: 3 } }}
             >
+               {/* ... existing grades modal ... */}
                 <DialogTitle sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
                     Grade History: <Typography component="span" fontWeight="700" color="primary">{selectedStudent?.name}</Typography>
                 </DialogTitle>
@@ -269,5 +286,76 @@ export default function StudentList() {
                 </DialogActions>
             </Dialog>
         </Card>
+    );
+}
+
+// Sub-component for clarity
+function CreateStudentDialog({ open, onClose, onCreated }) {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [classId, setClassId] = useState('');
+    const [classes, setClasses] = useState([]);
+    const [msg, setMsg] = useState('');
+
+    useEffect(() => {
+        if(open) {
+             fetch('http://localhost:8000/lms/classes/teacher/1')
+             .then(res => res.json())
+             .then(data => setClasses(data))
+             .catch(console.error);
+        }
+    }, [open]);
+
+    const handleCreate = async () => {
+        if(!name || !email || !classId) return;
+        try {
+            const res = await fetch('http://localhost:8000/lms/students', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, classId })
+            });
+            if(res.ok) {
+                setMsg('Student Created!');
+                setTimeout(() => {
+                    setMsg('');
+                    onCreated();
+                    onClose();
+                    setName(''); setEmail(''); setClassId('');
+                }, 1000);
+            } else {
+                setMsg('Failed to create student');
+            }
+        } catch(e) {
+            console.error(e);
+            setMsg('Error creating student');
+        }
+    };
+
+    return (
+        <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+            <DialogTitle>Add New Student</DialogTitle>
+            <DialogContent>
+                {msg && <Alert severity="info" sx={{mb:2}}>{msg}</Alert>}
+                <Stack spacing={2} sx={{mt:1}}>
+                    <TextField label="Name" fullWidth value={name} onChange={e=>setName(e.target.value)} />
+                    <TextField label="Email" fullWidth value={email} onChange={e=>setEmail(e.target.value)} />
+                    <TextField 
+                        select 
+                        label="Class" 
+                        fullWidth 
+                        value={classId} 
+                        onChange={e=>setClassId(e.target.value)}
+                        SelectProps={{ native: true }}
+                    >
+                        <option value="">Select Class</option>
+                        {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </TextField>
+                </Stack>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={onClose}>Cancel</Button>
+                <Button variant="contained" onClick={handleCreate}>Create</Button>
+            </DialogActions>
+        </Dialog>
     );
 }

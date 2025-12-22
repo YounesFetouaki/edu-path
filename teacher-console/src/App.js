@@ -4,6 +4,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
+import AssignmentManager from './pages/AssignmentManager';
 import theme from './theme';
 import './App.css';
 
@@ -28,6 +29,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+             <Route
+              path="/assignments"
+              element={
+                <ProtectedRoute>
+                  <AssignmentManager />
                 </ProtectedRoute>
               }
             />

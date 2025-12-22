@@ -15,6 +15,8 @@ import StudentList from '../components/StudentList';
 import Dashboard from '../components/Dashboard';
 import CourseManager from './CourseManager';
 import QuizBuilder from './QuizBuilder';
+import AssignmentManager from './AssignmentManager';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 
 const drawerWidth = 260;
 
@@ -33,6 +35,7 @@ export default function AdminDashboard() {
         switch (view) {
             case 'courses': return <CourseManager />;
             case 'users': return <StudentList />;
+            case 'assignments': return <AssignmentManager />;
             case 'quiz': return <QuizBuilder />;
             default: return <Dashboard />;
         }
@@ -104,6 +107,7 @@ export default function AdminDashboard() {
                             { id: 'dashboard', icon: <DashboardIcon />, label: 'Overview' },
                             { id: 'courses', icon: <SchoolIcon />, label: 'My Courses' },
                             { id: 'users', icon: <PeopleIcon />, label: 'Class Management' },
+                            { id: 'assignments', icon: <AssignmentIcon />, label: 'Assignments' },
                             { id: 'quiz', icon: <QuizIcon />, label: 'Quiz Builder' },
                         ].map((item) => (
                             <ListItem key={item.id} disablePadding sx={{ mb: 1 }}>

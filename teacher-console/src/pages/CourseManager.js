@@ -8,24 +8,26 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import QuizIcon from '@mui/icons-material/Quiz';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import axios from 'axios';
 import EditIcon from '@mui/icons-material/Edit';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import DescriptionIcon from '@mui/icons-material/Description';
+import { useAuth } from '../context/AuthContext';
 
 // API Configuration
 const API_URL = 'http://localhost:8000/lms'; // Via Gateway
 
-// ... imports
-
-
-// ... (existing code top part)
 
 export default function CourseManager() {
+    const { user } = useAuth();
     // ... (existing states)
     const [courses, setCourses] = useState([]);
     const [selectedCourseId, setSelectedCourseId] = useState('');
+
     const [courseStructure, setCourseStructure] = useState([]);
+    const [allQuizzes, setAllQuizzes] = useState([]); // List of available quizzes
+    const [allAssignments, setAllAssignments] = useState([]); // List of available assignments
     
     // Dialog States
     const [openModuleDialog, setOpenModuleDialog] = useState(false); // For Create
@@ -40,11 +42,19 @@ export default function CourseManager() {
     // Enhanced newChapter statre to include 'content'
     const [newChapter, setNewChapter] = useState({ title: '', type: 'video', url: '', duration: 10, content: '' });
 
+    // CREATE COURSE STATE
+    const [openCourseDialog, setOpenCourseDialog] = useState(false);
+    const [newCourseData, setNewCourseData] = useState({ title: '', description: '', category: '', thumbnail_url: '' });
+
     // ... (existing useEffects & fetch functions)
 
     useEffect(() => {
-        fetchCourses();
-    }, []);
+        if (user) {
+            fetchCourses();
+            fetchQuizzes();
+            fetchAssignments();
+        }
+    }, [user]);
 
     useEffect(() => {
         if (selectedCourseId) {
@@ -73,7 +83,46 @@ export default function CourseManager() {
         }
     };
 
-    // CREATE Logic (Existing + New Fields)
+    const fetchQuizzes = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/quizzes`);
+            setAllQuizzes(res.data);
+        } catch (error) {
+            console.error("Error fetching quizzes", error);
+        }
+    };
+
+    const fetchAssignments = async () => {
+        try {
+            if (!user) return;
+            // Using dynamic ID, fallback to 2 (Teacher)
+            const teacherId = user.id || 2;
+            const res = await axios.get(`${API_URL}/assignments/teacher/${teacherId}`);
+            setAllAssignments(res.data);
+        } catch (error) {
+            console.error("Error fetching assignments", error);
+        }
+    };
+
+
+
+    // CREATE COURSE LOGIC
+    const handleCreateCourse = async () => {
+        if (!newCourseData.title) return;
+        try {
+            await axios.post(`${API_URL}/courses`, {
+                ...newCourseData,
+                teacherId: 1 // Default to 1 (Admin/Teacher)
+            });
+            setOpenCourseDialog(false);
+            setNewCourseData({ title: '', description: '', category: '', thumbnail_url: '' });
+            fetchCourses(); // Refresh list
+            alert('Course created successfully!');
+        } catch (error) {
+            console.error(error);
+            alert('Failed to create course');
+        }
+    };
     const handleCreateModule = async () => {
         if (!newModuleTitle) return;
         try {
@@ -164,6 +213,7 @@ export default function CourseManager() {
         if(type === 'pdf') return <PictureAsPdfIcon color="error" />;
         if(type === 'text') return <DescriptionIcon color="info" />;
         if(type === 'quiz') return <QuizIcon color="warning" />;
+        if(type === 'assignment') return <AssignmentIcon color="success" />;
         return <VideoLibraryIcon color="primary" />;
     };
 
@@ -183,6 +233,15 @@ export default function CourseManager() {
                         ))}
                     </Select>
                 </FormControl>
+                <Button 
+                    variant="contained" 
+                    color="secondary" 
+                    startIcon={<AddCircleOutlineIcon />} 
+                    onClick={() => setOpenCourseDialog(true)}
+                    sx={{ ml: 2 }}
+                >
+                    New Course
+                </Button>
             </Box>
 
             {selectedCourseId && (
@@ -303,6 +362,8 @@ export default function CourseManager() {
                             <MenuItem value="video">Video</MenuItem>
                             <MenuItem value="text">Custom Text / Article</MenuItem>
                             <MenuItem value="pdf">PDF Document</MenuItem>
+                            <MenuItem value="quiz">Quiz</MenuItem>
+                            <MenuItem value="assignment">Assignment</MenuItem>
                         </Select>
                     </FormControl>
 
@@ -334,6 +395,38 @@ export default function CourseManager() {
                             value={newChapter.content}
                             onChange={(e) => setNewChapter({ ...newChapter, content: e.target.value })}
                         />
+                    )}
+
+                    {newChapter.type === 'quiz' && (
+                        <FormControl fullWidth>
+                            <InputLabel>Select Quiz</InputLabel>
+                            <Select
+                                value={newChapter.url}
+                                label="Select Quiz"
+                                onChange={(e) => setNewChapter({ ...newChapter, url: e.target.value })}
+                            >
+                                {allQuizzes.map((quiz) => (
+                                    <MenuItem key={quiz.id} value={quiz.id}>{quiz.title}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    )}
+
+                    {newChapter.type === 'assignment' && (
+                        <FormControl fullWidth>
+                            <InputLabel>Select Assignment</InputLabel>
+                            <Select
+                                value={newChapter.url} // We store assignment ID in 'content_url'
+                                label="Select Assignment"
+                                onChange={(e) => setNewChapter({ ...newChapter, url: e.target.value })}
+                            >
+                                {allAssignments.map((assign) => (
+                                    <MenuItem key={assign.id} value={assign.id}>
+                                        {assign.title} ({assign.class_name})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
                     )}
 
                      <TextField
@@ -371,6 +464,8 @@ export default function CourseManager() {
                             <MenuItem value="video">Video</MenuItem>
                             <MenuItem value="text">Custom Text / Article</MenuItem>
                             <MenuItem value="pdf">PDF Document</MenuItem>
+                            <MenuItem value="quiz">Quiz</MenuItem>
+                            <MenuItem value="assignment">Assignment</MenuItem>
                         </Select>
                     </FormControl>
 
@@ -403,6 +498,38 @@ export default function CourseManager() {
                         />
                     )}
 
+                    {editChapterData?.type === 'quiz' && (
+                         <FormControl fullWidth>
+                            <InputLabel>Select Quiz</InputLabel>
+                            <Select
+                                value={editChapterData?.url || ''}
+                                label="Select Quiz"
+                                onChange={(e) => setEditChapterData({ ...editChapterData, url: e.target.value })}
+                            >
+                                {allQuizzes.map((quiz) => (
+                                    <MenuItem key={quiz.id} value={quiz.id}>{quiz.title}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    )}
+
+                    {editChapterData?.type === 'assignment' && (
+                         <FormControl fullWidth>
+                            <InputLabel>Select Assignment</InputLabel>
+                            <Select
+                                value={editChapterData?.url || ''}
+                                label="Select Assignment"
+                                onChange={(e) => setEditChapterData({ ...editChapterData, url: e.target.value })}
+                            >
+                                {allAssignments.map((assign) => (
+                                    <MenuItem key={assign.id} value={assign.id}>
+                                        {assign.title} ({assign.class_name})
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    )}
+
                      <TextField
                         label="Duration (Minutes)"
                         type="number"
@@ -414,6 +541,44 @@ export default function CourseManager() {
                 <DialogActions>
                     <Button onClick={() => setEditChapterData(null)}>Cancel</Button>
                     <Button onClick={handleUpdateChapter} variant="contained">Update</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* CREATE COURSE DIALOG */}
+            <Dialog open={openCourseDialog} onClose={() => setOpenCourseDialog(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Create New Course</DialogTitle>
+                <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                    <TextField
+                        label="Course Title"
+                        fullWidth
+                        value={newCourseData.title}
+                        onChange={(e) => setNewCourseData({ ...newCourseData, title: e.target.value })}
+                    />
+                    <TextField
+                        label="Description"
+                        multiline
+                        rows={3}
+                        fullWidth
+                        value={newCourseData.description}
+                        onChange={(e) => setNewCourseData({ ...newCourseData, description: e.target.value })}
+                    />
+                    <TextField
+                        label="Category"
+                        fullWidth
+                        value={newCourseData.category}
+                        onChange={(e) => setNewCourseData({ ...newCourseData, category: e.target.value })}
+                    />
+                    <TextField
+                        label="Thumbnail URL (Visible in Mobile App)"
+                        fullWidth
+                        value={newCourseData.thumbnail_url}
+                        onChange={(e) => setNewCourseData({ ...newCourseData, thumbnail_url: e.target.value })}
+                        placeholder="https://example.com/image.jpg"
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpenCourseDialog(false)}>Cancel</Button>
+                    <Button onClick={handleCreateCourse} variant="contained" color="secondary">Create Course</Button>
                 </DialogActions>
             </Dialog>
 
