@@ -14,49 +14,47 @@
 
 ---
 
-## 2. Concepts Definitions
+## 2. Full Microservices Architecture
 
-### LSTM (Long Short-Term Memory)
-*   **What is it?**: A Deep Learning model (RNN) great for sequences (text, speech, time series).
-*   **Status**: **NOT USED**.
+The system is a distributed mesh of services, orchestrated by **Consul** and **Docker Compose**.
 
-### Prophet
-*   **What is it?**: A Time-Series forecasting tool by Meta/Facebook, good for seasonal data.
-*   **Status**: **NOT USED**.
+### A. Infrastructure & DevOps (The Backbone)
+| Component | Technology | Role & Responsibility |
+| :--- | :--- | :--- |
+| **Consul** | HashiCorp Consul | **Service Discovery**: Distinct services "register" themselves here so they can find each other by name (e.g., `student-coach`) instead of hardcoded IPs. |
+| **RabbitMQ** | Erlang | **Message Broker**: Handles **Asynchronous** communication. When a heavy event happens (like "Quiz Finished"), it's queued here so the user doesn't have to wait for the analysis to finish. |
+| **Jenkins** | Java / Groovy | **CI/CD Pipeline**: Automates the building, testing, and deployment of all these containers. Defined in `Jenkinsfile`. |
+| **PostgreSQL**| Database | **Primary Storage**: Holds all user data, logs, courses, and grades. |
+
+### B. Core Application Services
+| Service | Technology | Port | Role |
+| :--- | :--- | :--- | :--- |
+| **APIGateway** | Node.js / Express | `8000` | **The Doorman**: Single entry point. Routes all client requests to the correct internal service. Handles rate limiting. |
+| **AuthService** | Node.js / JWT | `3005` | **Security**: Manages Logins, Registration, and issues **JWT Tokens** to secure the API. |
+| **LMSConnector**| Node.js | `3001` | **Adapter**: Syncs data from external systems (like Moodle or Canvas) so our app has content to show. |
+
+### C. AI & Data Intelligence Services
+| Service | Model Used | Training | Role |
+| :--- | :--- | :--- | :--- |
+| **PrepaData** | *ETL Script* | N/A | **Generates Data**: Creates the synthetic dataset and cleans it (ETL) for the other AI services. |
+| **PathPredictor**| **XGBoost** | Offline | **Risk Engine**: Predicts if a student will fail (`Risk Probability`). |
+| **StudentProfiler**| **K-Means** | Offline | **Segmentation**: Groups students into "Personas" (At Risk, Standard, High Allocator). |
+| **StudentCoach** | **LLM (GPT-3.5)**| Pre-trained | **Chatbot**: The AI tutor that answers student questions in real-time. |
+| **RecoBuilder** | **Embeddings** | Offline | **Search**: Builds the index found relevant study resources using Vector Search. |
 
 ---
 
-## 3. Project Data & Architecture
-*Based on the system implementation and data flow.*
+## 3. Data & Training Details
 
-### A. The Data Sources
-The architecture relies on a **PostgreSQL** database enriched by an external **CSV** file.
+### The Data Sources
+1.  **PostgreSQL**: Main DB for logs (`student_logs`), users, and grades.
+2.  **CSV (`external_data.csv`)**: A simulated external dataset for enrichment.
 
-1.  **Core Operational Data (PostgreSQL)**
-    *   **Students & Users**: Identity management (`students`, `users`).
-    *   **Academics**: Course structure (`courses`, `classes`, `assignments`).
-    *   **Performance**: Grades and results (`grades`, `quizzes`).
-    *   **Activity Logs**: Raw events like logins and clicks (`student_logs`).
+### Data Cleaning (ETL)
+*   **Missing Values**: Filled with `0`.
+*   **Risk Logic**: If `Score < 50` OR `Actions < 10` → **High Risk**.
 
-2.  **External Dataset (CSV)**
-    *   **File**: `external_data.csv`
-    *   **Content**: Enrichment attributes like `study_hours_external` and `additional_score`.
-    *   **Purpose**: Simulates data from a third-party system coverage.
-
-### B. Data Preparation Pipeline (ETL)
-The raw data is processed in `PrepaData/etl.py` to create a clean "Golden Dataset".
-
-1.  **Ingestion**: Raw logs are extracted from Postgres and merged with the CSV.
-2.  **Transformation**:
-    *   **Aggregation**: Metrics calculated per student: `total_actions`, `avg_score`, `total_time`.
-    *   **Risk Calculation**: Heuristic rule: `Score < 50` OR `Actions < 10` = **High Risk**.
-    *   **Imputation**: Missing values filled with `0`.
-3.  **Loading**: Saved to `student_analytics` table.
-
-### C. Architecture & Models
-The Microservices use the clean `student_analytics` table for inference.
-
-| Service | Model Used | Training Mode | Input | Output |
-| :--- | :--- | :--- | :--- | :--- |
-| **PathPredictor** | **XGBoost** | **Offline** | `avg_score`, `total_actions`, `total_time` | **Risk Probability** |
-| **StudentProfiler** | **K-Means** | **Offline** | `avg_score`, `total_actions`, `total_time` | **Persona** ("At Risk", etc) |
+### Concepts Definitions (For Reference)
+*   **LSTM**: Deep Learning for sequences. **(Not Used)**
+*   **Prophet**: Time-series forecasting. **(Not Used)**
+*   **Online Training**: Updating models live. **(Not Used)**
