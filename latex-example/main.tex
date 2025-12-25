@@ -1,0 +1,530 @@
+
+
+%% 
+%% Copyright 2007, 2008, 2009 Elsevier Ltd
+%% 
+%% This file is part of the 'Elsarticle Bundle'.
+%% ---------------------------------------------
+%% 
+%% It may be distributed under the conditions of the LaTeX Project Public
+%% License, either version 1.2 of this license or (at your option) any
+%% later version.  The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.2 or later is part of all distributions of LaTeX
+%% version 1999/12/01 or later.
+%% 
+%% The list of all files belonging to the 'Elsarticle Bundle' is
+%% given in the file manifest.txt'.
+%% 
+
+%% Template article for Elsevier's document class elsarticle'
+%% with numbered style bibliographic references
+%% SP 2008/03/01
+
+\documentclass[preprint,12pt, a4paper]{elsarticle}
+
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    left=2cm,
+    right=2cm,
+    top=1.5cm,
+    bottom=3cm
+}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Configure code highlighting
+\lstset{
+    language=Java,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=5pt,
+    backgroundcolor=\color{gray!10},
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    frame=single,
+    rulecolor=\color{black},
+    tabsize=2,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+    escapeinside={\%*}{*)},
+    morekeywords={String, double, static, private, public, if, else, return, new}
+}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{framed}
+\usepackage{enumitem}
+\usepackage{pdfpages}
+\usepackage{hyperref}
+\usepackage{tablefootnote} % for table footnotes
+
+
+\usepackage{amssymb}
+\usepackage{subfig}
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\setlength{\parindent}{0pt}
+
+
+\journal{AgriAlertX}
+
+\begin{document}
+\renewcommand{\labelenumii}{\arabic{enumi}.\arabic{enumii}}
+
+\begin{frontmatter} 
+\title{AgriAlertX: Climate-Driven Disaster Prevention for Agriculture}
+
+
+\author[label1]{DADI Soukaina}
+\author[label2,label3]{LACHGAR Mohamed}
+\author[label4]{FATTOUHI Radwa }
+\author[label4]{DOUIDY Sifeddine}
+\author[label5]{Hamid HRIMECH}
+\author[label1]{KARTIT Ali}
+
+\address[label1]{Chouaib Doukkali University, National School of Applied Sciences, LTI Laboratory, El Jadida, Morocco}
+\address[label2]{Cadi Ayyad University, Higher Normal School, Computer Science Department, Marrakech, Morocco}
+\address[label3]{Cadi Ayyad University, L2IS Laboratory, Marrakech, Morocco}
+\address[label4]{Chouaib Doukkali University, National School of Applied Sciences, TRI Department , 2ITE, El Jadida, Morocco}
+\address[label5]{Hassan First University, National School of Applied Sciences, LAMSAD Laboratory, Berrechid, Morocco}
+
+\begin{abstract}
+Climate change has led to increasingly unpredictable weather events, posing serious threats to agricultural productivity worldwide. AgriAlertX is a digital decision-support platform designed to strengthen climate resilience for farmers through real-time alerts and context-specific recommendations. By integrating open weather APIs, predictive analytics, and crop-specific thresholds, the system delivers localized guidance tailored to each user’s geolocation and crop type. The platform helps mitigate the effects of droughts, frost, and heatwaves by supporting proactive decision-making and efficient resource use.
+Preliminary evaluations suggest that AgriAlertX may reduce agricultural losses by up to 20\%, depending on crop sensitivity and regional vulnerability. This initiative contributes to improved risk management and supports global efforts in climate-resilient, sustainable agriculture.
+\end{abstract}
+
+
+\begin{keyword}
+%% keywords here, in the form: keyword \sep keyword
+Agricultural monitoring \sep Disaster prevention \sep Analysis of meteorological data \sep Agricultural alerts
+
+%% PACS codes here, in the form: \PACS code \sep code
+
+%% MSC codes here, in the form: \MSC code \sep code
+%% or \MSC[2008] code \sep code (2000 is the default)
+
+\end{keyword}
+
+\end{frontmatter}
+
+%\linenumbers
+
+\section*{Metadata}
+\begin{table}[!ht]
+\centering
+\begin{tabular}{|l|p{7.5cm}|p{7.5cm}|}
+\hline
+\textbf{Nr.} & \textbf{Code metadata description} & \textbf{Metadata} \\
+\hline
+C1 & Current code version & v1.0 \\
+\hline
+C2 & Permanent link to code/repository used for this code version & \url{https://github.com/Radwa-f/AgriAlertX.git} \\
+\hline
+C3  & Permanent link to Reproducible Capsule & N/A\\
+\hline
+C4 & Legal Code License & MIT License \\
+\hline
+C5 & Code versioning system used & Git\\
+\hline
+C6 & Software code languages, tools, and services used & Python, Flask, Kotlin, Java, Spring
+Boot, Swift, SwiftUI, TypeScript, Next.js\\
+\hline
+C7 & Compilation requirements, operating environments \& dependencies & Android Studio, Python 3.x (transformers, flask), XCode, MySQL, Docker\\
+\hline
+C8 & Link to developer documentation/manual & \url{https://github.com/Radwa-f/AgriAlertX/blob/master/README.md} \\
+\hline
+C9 & Support email for questions & m.lachgar@uca.ac.ma\\
+\hline
+\end{tabular}
+\label{codeMetadata} 
+\end{table}
+
+\section{Motivation and significance}
+
+Agriculture faces growing vulnerability due to climate variability and extreme events—droughts, floods, heatwaves, and pest outbreaks—that cause substantial economic losses estimated at over \$12 billion annually~\cite{fao2022}. Smallholder farmers, producing about one-third of the world’s food, are disproportionately impacted by these disruptions because they have limited access to reliable weather forecasts and adaptive technologies~\cite{ricciardi2018}. For example, in arid and semi-arid regions, prolonged droughts have led to 20–40\% declines in cereal yields over the past decade~\cite{worldbank2021}, exacerbating food insecurity.
+
+AgriAlertX responds to these challenges by delivering early warnings and actionable, crop-specific recommendations based on localized weather data. Unlike conventional tools that focus on single variables such as soil moisture or irrigation, AgriAlertX integrates real-time meteorological information with adaptive decision models tailored to crop type and location. This enables the platform to provide optimized irrigation advice and planting schedules in drought-prone areas, while also triggering flood or frost protection protocols when needed, enhancing both anticipatory capacity and adaptive response~\cite{disasterPrediction2022}.
+
+Reactive strategies alone are often insufficient for preventing major yield losses. AgriAlertX shifts to a proactive approach, issuing alerts based on predictive indicators so that farmers can adjust practices before critical thresholds are breached. Advance warnings, for example, enable timely adoption of water-saving or soil improvement techniques, reducing potential losses by up to 25\%~\cite{worldbank2021}.
+
+As global population nears 9.7 billion by 2050~\cite{ipcc2022}, protecting agricultural productivity under climate stress becomes imperative. AgriAlertX supports this through precision forecasting and localized interventions that help farmers maintain yields and use inputs efficiently, aligning with Sustainable Development Goal 2 (Zero Hunger).
+
+To address the limitations of existing platforms, AgriAlertX combines adaptive analytics, participatory validation, and broad accessibility. Its core dynamically calibrates crop stress thresholds with real-time weather and phenological data, refines alerts using feedback from farmers and agronomists, and delivers support through a multilingual, cross-platform interface with integrated AI-powered chatbot. The platform incorporates authoritative crop–climate datasets from sources such as the FAO, USDA, and others, and maintains robustness with continuous integration and static code analysis. Its holistic feature set—including weather alerts, pest and disease warnings, predictive analytics, and agricultural news—positions AgriAlertX as a comprehensive solution for smallholder farmers in climate-vulnerable regions (Table~\ref{tab:tools_comparison}).
+
+\section{Software description}
+
+This project delivers a user-friendly platform focused on real-time decision-making and proactive risk management in agriculture. By analyzing location-specific weather data and integrating crop-specific recommendations, the system enables farmers to make informed decisions, protect yields, and minimize losses. Advanced analytics and predictive modeling provide real-time updates and actionable insights, helping users adapt to adverse conditions, optimize resource allocation, and build resilience against climate change. Ultimately, AgriAlertX supports sustainable farming and food security.
+
+
+\subsection{Software Architecture}
+
+The AgriAlertX platform is built with a modern, flexible, and strong software design that meets the needs of agricultural resilience and fast decision-making. This section delineates the architectural selections and their justifications, illustrating their contributions to system efficacy and user satisfaction (see Fig. \ref{fig:architecture}).
+
+ \begin{enumerate}
+     \item Overview of the Architecture 
+
+\textit{AgriAlertX} employs a microservices-based architecture to enhance scalability, modularity, and maintainability. Each component, from mobile and web clients to the chatbot, operates independently but communicates seamlessly with the backend through RESTful APIs. The architecture is containerized using Docker~\cite{docker}, ensuring consistent development, testing, and production environments. This modular design allows for efficient updates and minimal downtime, making the platform flexible and reliable for diverse user needs.
+     \item Backend Infrastructure 
+     
+The backend infrastructure is designed to be robust, secure, and scalable to handle real-time agricultural data processing. Several key technologies and frameworks are utilized to achieve this goal:
+
+\begin{itemize}
+    \item Spring Boot Framework: The backend is built with Spring Boot~\cite{springboot} due to its simplicity in setting up production-ready applications. Its robust dependency injection, support for RESTful APIs, and modular design make it an ideal choice for scalable back-end development. It is the heart connecting all components of the system.
+    \item Spring Security: User authentication and data protection are handled by Spring Security~\cite{springsecurity}, which provides advanced mechanisms for secure authorization and transaction handling.
+    \item Persistence Layer: The backend leverages JPA and Hibernate~\cite{hibernate} for object-relational mapping, simplifying database operations while ensuring high performance. MySQL~\cite{mysql} is used for data storage, ensuring scalability and reliability.
+    \item Flask for Chatbot Services: Flask~\cite{flask} powers the chatbot microservice, providing lightweight REST APIs and efficient communication with the Hugging Face AgriQBot model~\cite{huggingface}.
+
+    \item Python for Crops Analysis Services: Scikit-Learn powers the python  model, and FastApi provides lightweight REST API and efficient communication for an optimal crops analysis and recommendation~\cite{scikit-fastapi}.
+
+\end{itemize}
+     \item Frontend Composition
+     
+The frontend is designed to ensure a seamless user experience across web and mobile platforms. It incorporates modern frameworks and best practices to achieve a responsive and interactive interface.
+
+\begin{itemize}
+    \item Next.js for Web Client: The web interface uses Next.js~\cite{nextjs} for server-side rendering and dynamic routing, ensuring a fast, SEO-optimized user experience. Its component-based architecture simplifies development and enhances maintainability.
+    \item Kotlin for Android: The Android client employs Kotlin~\cite{kotlin}, which offers concise syntax, null safety, and seamless integration with modern Android frameworks. It follows an MVVM architecture, with LiveData for reactive programming and Retrofit~\cite{retrofit} for API communication.
+    \item Swift for iOS: The iOS client is developed using Swift~\cite{swift}, offering optimized performance and seamless integration with Apple’s ecosystem. The application integrates Alamofire~\cite{alamofire} for efficient HTTP networking.
+    \item Responsive Design: All interfaces are designed to be responsive, ensuring accessibility across various devices, including smartphones, tablets, and desktops.
+\end{itemize}
+     \item Database Management 
+     
+Effective database management is crucial for ensuring data integrity, security, and performance. The AgriAlertX platform employs the following technologies to optimize data storage and retrieval:
+
+\begin{itemize}
+    \item MySQL: The choice of MySQL~\cite{mysql} for database management is driven by its reliability, performance, and ability to handle complex queries. Its scalability and cost-effectiveness make it ideal for agricultural data storage.
+    \item Hibernate ORM: Hibernate~\cite{hibernate} simplifies database interactions by mapping the object-oriented domain model to the relational database, reducing boilerplate code and improving data management efficiency.
+\end{itemize}
+
+     \item Communication and Data Flow
+
+The platform employs RESTful APIs to facilitate seamless communication between the backend and frontend components. Data is exchanged in lightweight JSON format for compatibility across platforms. Each client (Android, iOS, and web) handles HTTP requests using specialized libraries like Retrofit (Android)~\cite{retrofit}, Alamofire (iOS)~\cite{alamofire}, and Axios~\cite{axios} and Fetch \cite{fetch}(web). This consistent communication architecture ensures real-time data flow and an optimal user experience.
+
+
+\item Deployment and Quality Assurance
+
+AgriAlertX is deployed as a containerized stack: the Android app communicates with a Spring Boot API gateway, which fetches weather data, normalizes inputs, and interacts with a Python microservice for hybrid analysis. The engine combines crop-specific rule checks with a multinomial logistic-regression model trained on the Kaggle crop-recommendation dataset (using temperature, humidity, rainfall, and pH as features, with fallback when pH is missing).
+
+Docker~\cite{docker} images are used consistently across development, staging, and production, with CI/CD pipelines for automated building, testing, and deployment. System health is monitored via dedicated endpoints, logs, metrics, and SLO alarms, with secrets managed securely and only coarse location data stored.
+
+Quality assurance leverages SonarQube~\cite{sonarqube} to ensure code quality, security, and maintainability. Comprehensive unit, integration, and end-to-end tests are run for each component to uphold high performance and reliability standards.
+
+
+     \item Innovative Components
+     
+To enhance user experience and decision-making capabilities, the AgriAlertX platform integrates several innovative features:
+
+\begin{itemize}
+    \item Chatbot Integration: Implemented using a Flask API and the AgriQBot model from Hugging Face~\cite{huggingface}, the chatbot leverages a sequence-to-sequence (Seq2Seq) architecture to generate responses based on user queries. It uses an encoder-decoder framework, where the encoder processes input into a context vector capturing semantic meaning and the decoder generates step-by-step responses. An attention mechanism further enhances accuracy by focusing on specific input parts during response generation. While the chatbot currently provides basic agricultural assistance, its capabilities can be expanded through fine-tuning on domain-specific datasets to handle more complex queries effectively.
+    \item Predictive Analytics and Threshold Analysis: The platform integrates a weather prediction API provided by Open-Meteo~\cite{open-meteo} and a crop-specific threshold analysis to deliver actionable insights, enabling farmers to take proactive measures against adverse conditions.
+    \item Real-Time Notifications: Instant alerts are delivered to users via mobile and web platforms, ensuring timely actions to mitigate potential risks.
+    \item Agricultural News: As an additional feature, AgriAlertX provides farmers the possibility of receiving weekly news related to agriculture by implementing the World News API ~\cite{world-news}.
+    \item State Management in Web Client: The web client employs React hooks like \texttt{useState} and \texttt{useEffect} for efficient state management, resulting in a responsive and user-friendly interface.
+\end{itemize}
+ \end{enumerate}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{new-assets/Architecture.png}
+    \caption{AgriAlertX Architecture }
+    \label{fig:architecture}
+\end{figure}
+
+\subsection{Software functionalities}
+
+The \textit{AgriAlertX} platform offers a comprehensive set of user-focused features to enhance agricultural resilience and manage disaster risks. Its functionalities are designed to optimize user experience, enable timely decisions, and support effective crop management:
+
+\begin{enumerate}
+    \item \textbf{User and Location Management:}
+    Secure user accounts allow farmers to register, specify key crops, and receive personalized notifications and recommendations. Users can update personal details, manage crop lists, and set or adjust their geographic location, either via geolocation or manual entry, ensuring tailored, localized advice for each farm.
+
+    \item \textbf{Weather Monitoring:}
+    The platform delivers real-time weather data—temperature, precipitation, and forecasts—so farmers can adapt activities accordingly. For instance, a forecast of heavy rain may prompt postponing irrigation to avoid overwatering. Access to historical weather trends helps refine long-term strategies.
+
+    \item \textbf{Alert System:}
+    Automated alerts notify users about hazards such as frost or drought, based on local meteorological data and crop type. Prompt notifications allow timely protective measures (e.g., covering crops before frost), and farmers can access alert history for review and planning. The BPMN diagram (Fig.~\ref{fig:agrialert-bpmn-diagram}) illustrates these core routines.
+
+    \item \textbf{Agricultural Recommendations:}
+    The system provides tailored advice on irrigation, fertilization, and preventive measures, dynamically adjusted for each crop and weather scenario. For example, during drought, it may suggest modified watering schedules for maize to conserve water while maintaining yield.
+
+    \item \textbf{Agricultural News:}
+    An integrated news module keeps farmers updated on industry trends and best practices, with the ability to browse, search, and share relevant articles, supporting ongoing learning and community collaboration.
+
+    \item \textbf{Chatbot Assistance:}
+    An interactive AI-powered chatbot answers farmer questions in real time using natural language processing. For example, it may recommend optimal wheat irrigation times in winter or suggest organic pest control solutions during rainy periods, providing immediate, actionable guidance.
+\end{enumerate}
+
+Together, these features, including user and location management, real-time weather, alerts, recommendations, news, and chatbot support, work together to deliver actionable insights, enabling farmers to proactively manage crops and respond effectively to changing conditions.
+
+\subsection{Analysis and Recommendation Engine}
+
+The AgriAlertX decision engine combines deterministic agronomy with machine learning to provide both transparent explanations and predictive insights. At runtime, the mobile app sends user crops and location to the backend, which resolves forecasts and forwards relevant features (max/min temperature, rainfall extremes, mean humidity) to a Python analysis endpoint.
+
+The engine consists of two layers: 
+\begin{enumerate}
+    \item \textbf{Rule-based layer}: Using crop tolerance profiles (min/max temperature, rainfall, humidity), it calculates deviations from optimal ranges and generates severity scores (LOW/MEDIUM/HIGH). Targeted recommendations are produced from an auditable knowledge base, ensuring explainability for each suggested action. Crop thresholds are sourced from FAO Crop Information~\cite{fao_crop_info}, Ecocrop~\cite{fao_ecocrop}, and USDA Plant Hardiness~\cite{usda_plant_hardiness}.
+    \item \textbf {Machine learning layer}: A lightweight Python microservice runs a scikit-learn pipeline (standardization + multinomial logistic regression) trained on the Crop Recommendation dataset (features: temperature, humidity, rainfall, pH). When the model’s confidence exceeds 90\% and matches a user’s crop, the UI highlights ideal conditions and proactive tips; otherwise, the system defaults to rule-based results. Model health is checked continuously; if unavailable or below quality thresholds, the fallback is automatic and seamless.
+    
+\end{enumerate}
+The orchestration, shown in the BPMN diagram (Fig.~\ref{fig:agrialert-bpmn-diagram}), routes requests through “ML ready?” and merges outputs into a uniform response for the app. This modular design allows updates to weather providers, tolerance tables, or recommender templates independently.
+
+Model evaluation (Table~\ref{tab:perf_metrics}, Fig.~\ref{fig:confusion-matrix}) shows robust performance: hold-out accuracy 0.79 (true pH) and 0.73 (assumed pH), macro-F1 of 0.79 and 0.70 respectively, with top-3 accuracy $\approx$0.95. The confusion matrix illustrates crop class separation and informs threshold settings.
+
+
+\begin{table}[h]
+\centering
+\caption{System Performance Metrics}
+\label{tab:perf_metrics}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Setting} & \textbf{Accuracy} & \textbf{Macro-F1} & \textbf{Top-3 Accuracy} \\
+\hline
+Hold-out (true pH) & 0.793 & 0.787 & 0.957 \\
+Hold-out (assumed pH = 6.5) & 0.732 & 0.696 & 0.950 \\
+5-fold CV (true pH) & 0.782 $\pm$ 0.010 & 0.774 $\pm$ 0.012 & -- \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+   
+        \includegraphics[width=0.7\linewidth]{new-assets/crop_confusion_matrix.png}
+        \caption{Crops Confusion Matrix}
+        \label{fig:confusion-matrix}
+    
+\end{figure}
+
+
+ \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{new-assets/BPMN.png}
+    \caption{AgriAlertX BPMN Workflow Diagram}
+    \label{fig:agrialert-bpmn-diagram}
+\end{figure}
+
+\section{Illustrative Examples}
+To better understand how \textit{AgriAlertX} assists farmers in mitigating climate-related risks, we give many illustrative scenarios that showcase its practical applicability. These instances illustrate how the platform delivers real-time notifications, tailored suggestions, and practical insights to facilitate agricultural decision-making and guarantee prompt solutions. Moreover, AgriAlertX integrates many supplementary features to enhance use and accessibility, hence advancing agricultural risk management.
+
+\subsection{Extreme Weather Alerts for Crops}
+
+Agricultural productivity is highly vulnerable to extreme events such as drought, heat stress, frost, and cold stress. These reduce yields, heighten pest risks, and threaten food security. To address this, the platform employs an ML-powered early warning system that combines real-time weather data, predictive analytics, and crop-specific thresholds from agronomic literature (e.g., \cite{luo2011}). Phenology-aware indices such as Growing Degree Days (GDD) and water balance indicators refine alert timing, while mobile alerts with severity markers and recommendations guide farmers in real time. Beyond adverse events, the system also identifies favorable growing conditions when forecasts align with crop tolerance profiles at high confidence (see Figs.~\ref{fig:mothright}, \ref{fig:moth}).  
+
+The following scenarios highlight how the system delivers timely, crop-specific guidance. While this section focuses on coconut, wheat, and grapevine, future validation will extend to other climate-sensitive crops such as rice and maize.
+
+\subsubsection{Scenario 1: Coconut Drought and Heat Stress}
+
+Coconut production is highly sensitive to drought and elevated temperatures, which reduce yields, deplete water resources, and increase pest risks. When critical thresholds for temperature and rainfall are exceeded, the system issues high-severity alerts and delivers localized drought insights (see Figs.~\ref{fig:insight_alert}, \ref{fig:crops_alert}).  
+
+To mitigate impacts, farmers are guided to optimize irrigation, apply mulching, and adjust soil fertility management (see Fig.~\ref{fig:drought_recommendations}). These measures enhance resilience and help safeguard yields under prolonged stress (see Fig.~\ref{fig:Drought}).
+
+\subsubsection{Scenario 2: Wheat Frost and Cold Stress}
+
+Wheat crops are vulnerable to frost and cold stress, which damage tissues, reduce germination, and slow growth, particularly under low soil moisture. The system issues medium-severity alerts when minimum temperatures fall below thresholds adjusted for phenological stage \cite{luo2011}. Insight notifications highlight temperature anomalies and frost risks (see Figs.~\ref{fig:insight_frost}, \ref{fig:crops_frost}).  
+
+Recommended practices include nighttime irrigation to buffer soil temperature, organic mulching to limit heat loss, and moisture conservation to reduce cold-induced drought stress (see Fig.~\ref{fig:frost_recommendations}). These targeted measures help maintain productivity under extreme cold (see Fig.~\ref{fig:Drought}).
+
+\subsubsection{Scenario 3: Grapevine Heatwave and Low Rainfall}
+
+Grapevine growth is threatened by heatwaves combined with low rainfall, which accelerate sugar accumulation, cause berry shriveling and sunburn, and limit nutrient uptake. The system issues high-severity alerts when temperature and rainfall thresholds are exceeded, supported by GDD and rainfall deviation indices. Insight panels highlight dual-stress risks and flag critical stages such as flowering and ripening (see Figs.~\ref{fig:insight_heat}, \ref{fig:crops_heat}).  
+
+Mitigation strategies include regulated deficit irrigation or supplemental watering, mulching and cover crops to conserve soil moisture, and canopy management practices such as strategic leaf removal (see Fig.~\ref{fig:heat_recommendations}). These recommendations help preserve both yield and fruit quality under extreme conditions (see Fig.~\ref{fig:GrapeAlerts}).
+
+
+\subsection{Additional Features}
+
+In addition to real-time weather alerts, \textit{AgriAlertX} offers advanced features to improve decision-making, boost efficiency, and support farmers in daily operations. These tools provide real-time insights, personalized assistance, and geolocated services for more informed and responsive practices.
+
+A key component is the AI-powered chatbot, which delivers context-specific advice on crop protection, irrigation, and soil health (see Fig.~\ref{fig:ChatBot}). Its recommendations adapt to crop type and weather conditions for precision and relevance.
+
+To increase alert accuracy, the platform integrates geolocation, allowing users to set locations manually or via GPS. This ensures highly localized alerts—such as climate forecasts, frost warnings, and drought advisories—tailored to each area. Multiple locations can be saved for monitoring distributed plots (see Fig.~\ref{fig:LocationMap}).
+
+The system also provides real-time notifications on weather risks, crop health, and personalized action plans, helping farmers adjust irrigation and respond quickly to changing conditions (see Fig.~\ref{fig:Notification}).
+
+By combining smart insights, location-aware analytics, and instant communication, the platform delivers a comprehensive decision-support system that enhances precision and climate resilience across agriculture.
+
+
+
+
+
+\begin{figure}[H]
+    \centering
+    \subfloat[Insight Alert]{\includegraphics[width=0.25\textwidth]{new-assets/coco1.png}\label{fig:insight_alert}}
+    \hfill
+    \subfloat[Crops Alert]{\includegraphics[width=0.25\textwidth]{new-assets/coco2.png}\label{fig:crops_alert}}
+    \hfill
+    \subfloat[Drought Recommendations]{\includegraphics[width=0.25\textwidth]{new-assets/coco3.png}\label{fig:drought_recommendations}}
+    
+    
+    \hfill
+    
+    % --- Row 1: Wheat ---
+    \subfloat[Wheat – Insight Alert]{\includegraphics[width=0.25\linewidth]{new-assets/wheat1.png}\label{fig:insight_frost}} \hfill
+    \subfloat[Wheat – Crops Alert]{\includegraphics[width=0.25\linewidth]{new-assets/wheat2.png}\label{fig:crops_frost}} \hfill
+    \subfloat[Wheat – Recommendations]{\includegraphics[width=0.25\linewidth]{new-assets/wheat3.png}\label{fig:frost_recommendations}} 
+
+    \caption{AgriAlertX Android application: Drought and Heat Stress Alert for Coconut and Wheat.}
+    \label{fig:Drought}
+\end{figure}
+\begin{figure}[H]
+    
+    \subfloat[Grapes – Insight Alert]{\includegraphics[width=0.25\linewidth]{new-assets/grapes1.png}\label{fig:insight_heat}} \hfill
+    \subfloat[Grapes – Crops Alert]{\includegraphics[width=0.25\linewidth]{new-assets/grapes2.png}\label{fig:crops_heat}} \hfill
+    \subfloat[Grapes – Recommendations]{\includegraphics[width=0.25\linewidth]{new-assets/grapes3.png}\label{fig:heat_recommendations}}
+
+    \caption{AgriAlertX Android application: Cold stress alerts with recommendations for Grapes.}
+    \label{fig:GrapeAlerts}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    % First row
+    \subfloat[Right weather]{\includegraphics[width=0.22\textwidth]{new-assets/moth1.png}\label{fig:mothright}}
+    \hfill
+    \subfloat[Mothbeans insight]{\includegraphics[width=0.22\textwidth]{new-assets/moth2.png}\label{fig:moth}}
+    \hfill
+    \subfloat[News]{\includegraphics[width=0.22\textwidth]{new-assets/news.png}\label{fig:News}}
+    \hfill
+    \subfloat[ChatBot]{\includegraphics[width=0.22\textwidth]{new-assets/chat1.png}\label{fig:ChatBot}}\\[1em]
+    
+    % Second row
+    \subfloat[Location Map]{\includegraphics[width=0.22\textwidth]{new-assets/location.png}\label{fig:LocationMap}}
+    \hfill
+    \subfloat[Notification]{\includegraphics[width=0.22\textwidth]{new-assets/notif.png}\label{fig:Notification}}
+    \hfill
+    \subfloat[Settings]{\includegraphics[width=0.22\textwidth]{new-assets/settings.png}\label{fig:Settings}}
+    \hfill
+    \subfloat[Other features]{\includegraphics[width=0.22\textwidth]{new-assets/others.png}\label{fig:other}}
+    
+    \caption{AgriAlertX Android application: Additional Features}
+    \label{fig:App}
+\end{figure}
+
+
+
+\section{Impact}
+
+The integration of real-time monitoring, AI-based analytics, and crop-specific recommendations in AgriAlertX strengthens both agricultural resilience and decision-making. By combining machine learning, satellite data, and IoT sensors, the platform improves weather forecasting, soil moisture tracking, and crop health assessment, supporting precision farming, disaster preparedness, and sustainable agriculture~\cite{springer2024, climateAdapt2023}.
+
+In practice, AgriAlertX empowers farmers to anticipate and respond to climate threats through real-time alerts and tailored advice, enabling efficient input use and reducing both costs and potential losses~\cite{precisionAgri2023, resilienceAgri2024}. Its integrated AI-powered chatbot delivers expert guidance on pest management, planting schedules, and soil health, making scientific insights accessible even to smallholder farmers, and ensuring recommendations are relevant and timely through location-aware monitoring.
+
+From a policy perspective, AgriAlertX supports food security and climate adaptation by promoting sustainable land management. It offers actionable insights on climate variability, water use, and soil conservation, helping farmers reduce chemical overuse, limit water waste, and adopt conservation practices~\cite{sustainableFarming2024}. The platform’s datasets also aid policymakers and agencies in developing evidence-based adaptation frameworks and rural development strategies~\cite{policyAgri2024}.
+
+Overall, AgriAlertX delivers impact from farm-level resilience to scientific and policy innovation, empowering users with actionable intelligence to support stable, productive, and sustainable food systems.
+
+\subsection {Comparison with Existing Tools}
+Several existing tools support climate resilience and disaster mitigation by offering weather insights and agronomic recommendations. However, the present solution differentiates itself through its unique combination of real-time predictive alerts, AI-powered diagnostics, and actionable guidance.
+
+\begin{table}[!h]
+\centering
+\caption{Comparative analysis of agricultural tools.}
+\label{tab:tools_comparison}
+\scriptsize
+\begin{tabular}{|@{}p{2cm}|l|c|c|c|c|c|c|}
+\hline
+\textbf{Feature}                  & \textbf{AgriAlertX} & \textbf{CropX\tablefootnote{\url{https://www.cropx.com}}} & \textbf{Climate FieldView\tablefootnote{\url{https://www.climate.com}}} & \textbf{Granular\tablefootnote{\url{https://www.granular.ag}}} & \textbf{Taranis\tablefootnote{\url{https://www.taranis.ag}}} & \textbf{FarmLogs\tablefootnote{\url{https://www.farmlogs.com}}} \\ \hline
+Real-Time Weather Alerts          & Yes               & Limited         & Yes              & No                & No               & Limited          \\ \hline
+Crop-Specific Recommendations     & Yes               & Yes             & No               & Limited           & Yes              & Limited          \\ \hline
+AI-Driven Analysis                & Yes               & Yes             & Yes              & No                & Yes              & No               \\ \hline
+Soil Health Monitoring            & Limited           & Yes             & No               & Yes               & No               & No               \\ \hline
+Predictive Yield Forecasting      & Yes               & Limited         & Yes              & Yes               & Yes              & Yes              \\ \hline
+Pest and Disease Alerts           & Yes               & No              & No               & No                & Yes              & No               \\ \hline
+User-Friendly Mobile Interface    & Yes               & Yes             & Yes              & Limited           & Yes              & Yes              \\ \hline
+Integration with IoT Devices      & Moderate          & Yes             & Yes              & Yes               & Yes              & Limited          \\ \hline
+Cost Efficiency                   & High              & Moderate        & Moderate         & Moderate          & Low              & High             \\ \hline
+Focus on Smallholder Farmers      & High              & Low             & Moderate         & Low               & Moderate         & High             \\ \hline
+\end{tabular}
+\end{table}
+
+As detailed in Table~\ref{tab:tools_comparison}, tools like CropX and Climate FieldView focus on optimizing irrigation and crop health using weather-based data. While CropX integrates soil monitoring and tailored recommendations, Climate FieldView emphasizes AI-powered yield forecasts. Yet both systems primarily emphasize monitoring over mitigation.
+
+Other tools—such as Granular and FarmLogs offer general farm management functions with limited crop-specific analytics and lack proactive pest or disease alerts. Although Taranis employs AI for yield prediction, it omits critical features like real-time weather warnings and soil health assessments.
+
+The present solution unifies weather forecasting, AI analytics, and immediate notifications to support operational readiness. Unlike AgriSync, which connects farmers to human experts, this tool offers autonomous, automated guidance. Compared to FarmLogs, which delivers generalized forecasts, it improves on-the-ground responsiveness through precise and localized decision support.
+
+Currently in its prototype phase, the system is accessible via iOS, Android, and web platforms. With its integrated features—such as pest and disease alerts, predictive yield modeling, and IoT connectivity it holds strong potential to reshape agricultural adaptation and climate resilience in both industrial and smallholder farming contexts.
+
+\section{Collaborative Validation and Future Directions}
+
+To ensure the platform's robustness, scalability, and applicability, AgriAlertX will undergo collaborative validation. While the prototype shows strong potential for agricultural resilience, extended testing across diverse agro-ecological zones and crop types remains essential to refine predictive models and thresholds.
+
+A key direction is a crowdsourcing framework where farmers, agronomists, and institutions contribute field observations and contextual feedback. This participatory loop enables real-time calibration of agroclimatic thresholds such as temperature and precipitation extremes based on local crop responses~\cite{wiggins2011}. Such collaboration not only strengthens scientific validity but also accelerates the evolution of mitigation strategies and system adaptability. A dedicated app interface will allow users to annotate alerts, confirm or reject recommendations, and submit feedback on crop performance, fostering transparency and community ownership.
+
+Future developments will integrate open agricultural datasets, extension systems, and research networks, aligning AgriAlertX with global efforts in open, participatory digital agriculture. This vision positions the platform as a scalable and sustainable tool for climate resilience and food security.
+
+To broaden generalizability, future iterations will incorporate models for grapevine, rice, and maize selected for scientific and regional relevance thus enhancing the diversity of stress profiles and supporting wider deployment. The participatory validation will be operationalized via a mobile crowdsourcing module, enabling users to upload standardized field observations (timestamp, GPS, crop type, growth stage, stress symptoms, local weather, mitigation actions) through a secure backend API.
+
+Submissions will pass through a validation pipeline (completeness, consistency, geolocation, metadata conformity), with verified data used to recalibrate alert thresholds dynamically. The system ensures traceability, feedback integrity, and scientific rigor. Future versions may add a user-rating system and community dashboard to visualize aggregated contributions~\cite{wiggins2011}.
+
+\section{Quality Assurance}
+
+A detailed quality assurance (QA) assessment was conducted in the back-end, web front-end, and mobile applications (Android and iOS) using SonarQube. This evaluation focused on essential software quality metrics, including \textit{Reliability}, \textit{Security}, \textit{Maintainability}, \textit{Code Duplication}, and \textit{Code Coverage}. The summary of the results is presented in Table~\ref{tab:qa_metrics}.
+
+\begin{table}[h!]
+\centering
+\scriptsize
+\caption{Quality assurance results for different components}
+\label{tab:qa_metrics}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Metric} & \textbf{Back-end} & \textbf{Web Front-end} & \textbf{Android App} & \textbf{iOS App} \\
+\hline
+\textbf{Quality Gate Status} & Passed & Passed & Passed & Passed \\
+\hline
+\textbf{Reliability Rating} & A (0 issues) & D (23 issues) & A (4 issues) & A (0 issues) \\
+\hline
+\textbf{Security Rating} & A & A & A & A \\
+\hline
+\textbf{Maintainability Rating} & A (25 issues) & A (141 issues) & A (4 issues) & A (0 issues) \\
+\hline
+\textbf{Code Duplication} & 1.6\% & 2.4\% & 1.2\% & 0.0\% \\
+\hline
+\textbf{Security Hotspots} & 1 & 2 & 2 & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+
+The security assessment showed excellent results across all components, each receiving an A rating and demonstrating strong adherence to best practices with no detected vulnerabilities. Maintainability was also rated A for the back-end and mobile apps, while the web front-end revealed concerns, with 141 issues and a D rating; resolving these is essential to reduce technical debt. Reliability assessments mirrored this trend: back-end, Android, and iOS scored A with no open issues, but the web front-end received a D due to 23 unresolved issues, highlighting the need for improved stability.
+
+To address these web front-end issues and low test coverage, a refactor using modular design patterns is underway, alongside implementation of Jest and Cypress to raise code coverage to at least 80\%. This will enhance maintainability, reduce technical debt, and support platform scalability.
+
+Code duplication analysis was positive, with the back-end at 1.6\%, web front-end at 2.4\%, and both mobile apps at 0.0\%. However, a critical finding was low automated test coverage: only 28.9\% for the back-end and 0.0\% for all front-ends, indicating risk of undetected defects. Structured testing is thus a priority for improved reliability.
+
+Despite these challenges, all components passed the \textit{SonarQube Quality Gate}, meeting baseline software standards. Continued focus on web front-end reliability and automated testing is vital for future improvement.
+
+Complementing software quality assessment, system performance and usability were evaluated through simulations, forecast data, and user feedback. The average alert latency was 2.3 minutes (SD: 0.8), RMSE for 24-hour temperature forecasts was 1.8°C (MAE: 1.2°C), and RMSE for 72-hour forecasts reached 3.1°C. A usability study with 33 smallholder farmers yielded a System Usability Score (SUS) of 82.6~\cite{brooke1996sus}, reflecting high user satisfaction. These preliminary results support AgriAlertX’s responsiveness, forecast quality, and usability; broader field validation is planned for future deployments.
+
+
+\section{Conclusions}
+
+AgriAlertX represents a promising advancement in agricultural risk management by combining real-time weather forecasting with crop-specific, actionable recommendations. The current implementation leverages open-source weather APIs to deliver forward-looking alerts and practical guidance tailored to predicted meteorological conditions. While the system currently operates using threshold-based alerts, it exhibits strong potential for enhancement through the integration of machine learning models and advanced predictive analytics.
+
+Key development priorities include expanding automated test coverage, enriching the crop-weather knowledge base, and refining the accuracy and specificity of climate-driven recommendations. These improvements would strengthen the platform’s predictive power and responsiveness in diverse agricultural contexts.
+
+In the face of escalating climate uncertainty, tools like AgriAlertX can play a crucial role within the broader ecosystem of agricultural decision-support systems. Its open-source architecture and multi-platform accessibility foster inclusivity, enabling widespread adoption and iterative co-development.
+
+Future iterations of the platform will also benefit from collaborative validation strategies, involving farmers, agronomists, and researchers in a participatory feedback loop. This community-driven approach will support the dynamic refinement of thresholds and recommendations, making AgriAlertX not just a technical solution, but a living, adaptive system shaped by its users.
+
+AgriAlertX exemplifies how integrated digital tools can operationalize climate adaptation strategies in agriculture.
+Future deployments and collaborative feedback loops will be key to scaling AgriAlertX as a globally adaptive, data-informed agricultural resilience tool.
+
+ \bibliographystyle{unsrt}
+ \bibliography{bibliography}
+
+\end{document}
+\endinput

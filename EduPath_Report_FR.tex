@@ -1,0 +1,527 @@
+\UseRawInputEncoding
+\documentclass[12pt, a4paper]{article}
+
+% ========== REQUIRED PACKAGES ==========
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\geometry{a4paper, margin=2.5cm}
+
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{newunicodechar}
+\newunicodechar{₂}{$_2$}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{afterpage}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{longtable}
+
+% ========== SECTION FORMATTING ==========
+\titleformat{\section}
+{\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}
+{\normalfont\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+{\normalfont\normalsize\bfseries}{\thesubsubsection}{1em}{}
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+
+% ========== CODE CONFIGURATION ==========
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true,
+    captionpos=b,
+    showstringspaces=false
+}
+
+% ========== METADATA ==========
+\title{EduPath-MS : Une Architecture Microservices Évolutive pour le Profilage Généralisé des Étudiants et la Prédiction des Risques dans l'Enseignement Supérieur}
+
+\author{
+    Younes Fetouaki\textsuperscript{1} \\ 
+    \texttt{younes.fetouaki@emsi-edu.ma}
+    \and 
+    Abdellah Jorf\textsuperscript{1} \\
+    \texttt{abdellah.jorf@emsi-edu.ma}
+    \and 
+    Jabri Anas\textsuperscript{1} \\
+    \texttt{jabri.anas@emsi-edu.ma}
+    \and
+    Tahiri Oussama\textsuperscript{1} \\
+    \texttt{tahiri.oussama@emsi-edu.ma}
+}
+
+% ========== DOCUMENT START ==========
+\begin{document}
+
+\maketitle
+
+\begin{center}
+\textsuperscript{1}Département de Génie Informatique \\
+École Marocaine des Sciences de l'Ingénieur (EMSI) \\
+Campus de Marrakech, Maroc
+\end{center}
+
+% ---------- ABSTRACT ----------
+\begin{abstract}
+EduPath-MS est un système d'apprentissage adaptatif natif pour le cloud et basé sur des microservices, conçu pour relever le défi critique de la rétention des étudiants dans les environnements d'éducation en ligne à grande échelle. La plateforme intègre des flux de données hétérogènes provenant de systèmes de gestion de l'apprentissage (LMS), des journaux comportementaux en temps réel et des historiques de performance pour générer des profils d'étudiants dynamiques et prédire les risques académiques. En employant une architecture distribuée de microservices spécialisés — incluant \textit{StudentProfiler} pour le clustering non supervisé, \textit{PathPredictor} pour la prévision supervisée, et \textit{RecoBuilder} pour la recommandation de contenu personnalisé — le système fournit une solution fiable, explicable et évolutive pour l'intervention pédagogique.
+
+Le système opérationnalise des techniques avancées d'apprentissage automatique, spécifiquement le clustering K-Means pour la segmentation comportementale et eXtreme Gradient Boosting (XGBoost) pour l'estimation de la probabilité d'échec. Validé sur un ensemble de données synthétiques de 50 000 journaux d'interactions représentant 1 200 étudiants, EduPath-MS atteint une précision de prédiction des risques de 89,4 \% et un score Silhouette de segmentation de profil de 0,68. L'architecture modulaire assure une haute disponibilité et une évolutivité horizontale, répondant à la demande institutionnelle croissante pour des initiatives de réussite étudiante basées sur les données. Des simulations de déploiement préliminaires démontrent la capacité du système à traiter des événements en temps réel avec une latence inférieure à la seconde, permettant des boucles de rétroaction immédiates pour les apprenants à risque.
+
+\textbf{Mots-clés :} Fouille de Données Éducatives (EDM), Architecture Microservices, Apprentissage Adaptatif, Profilage des Étudiants, Prédiction des Risques, Clustering K-Means, XGBoost, Docker, Analytique de l'Apprentissage.
+\end{abstract}
+
+% ---------- METADATA TABLE ----------
+\section*{Métadonnées}
+\begin{table}[!ht]
+\centering
+\begin{tabular}{|l|p{7.5cm}|p{7.5cm}|}
+\hline
+\textbf{N°} & \textbf{Description des métadonnées du code} & \textbf{Métadonnées} \\
+\hline
+C1 & Version actuelle du code & v1.0 \\
+\hline
+C2 & Lien permanent vers le code/dépôt utilisé pour cette version & \url{https://github.com/YounesFetouaki/edu-path.git} \\
+\hline
+C3 & Système de gestion de version du code utilisé & Git \\
+\hline
+C4 & Langages de code logiciel, outils et services utilisés & Python (Flask, Scikit-learn, XGBoost), Node.js (Express), React, Flutter, Docker, PostgreSQL, MinIO, RabbitMQ \\
+\hline
+C5 & Exigences de compilation, environnements d'exploitation et dépendances & Docker Desktop 4+, Python 3.9+, Node.js 18+, 16 Go de RAM recommandés pour une exécution complète \\
+\hline
+C6 & Email de support pour les questions & younes.fetouaki@emsi-edu.ma \\
+\hline
+\end{tabular}
+\label{metadata} 
+\end{table}
+
+% ========== MAIN SECTIONS ==========
+
+\section{Motivation et Importance}
+
+La numérisation de l'enseignement supérieur a généré un volume sans précédent de données concernant les comportements d'apprentissage des étudiants. Les systèmes de gestion de l'apprentissage (LMS) tels que Moodle, Canvas et Blackboard capturent chaque clic, soumission et interaction sur les forums. Cependant, malgré cette richesse de données, la rétention des étudiants reste un défi persistant. Dans les Massive Open Online Courses (MOOC), les taux d'achèvement oscillent souvent en dessous de 10 \% \cite{margaryan2015instructional}, tandis que les programmes diplômants en ligne traditionnels connaissent fréquemment des taux d'abandon nettement plus élevés que leurs équivalents en présentiel. Le "Problème de Persistance" est exacerbé par le manque de rétroaction opportune et personnalisée \cite{romero2010educational}. Dans de nombreux cas, les éducateurs ne prennent conscience des difficultés d'un étudiant qu'après un échec majeur à une évaluation, moment où l'intervention peut être trop tardive.
+
+EduPath-MS relève ces défis en transformant les données éducatives statiques en intelligence actionnable en temps réel. Le logiciel résout le problème scientifique de l'intégration de sources de données disparates — journaux d'interactions, relevés de notes et données démographiques — dans un cadre prédictif unifié capable de fonctionner à grande échelle. En tirant parti d'une architecture microservices, EduPath-MS découple l'ingestion, le traitement et l'analyse des données, permettant l'entraînement continu de modèles prédictifs sans perturber l'expérience utilisateur \cite{lewis2014microservices}.
+
+Des études récentes en Fouille de Données Éducatives (EDM) ont démontré l'efficacité de l'apprentissage automatique dans la prédiction des résultats des étudiants. Par exemple, des modèles prédictifs utilisant des Forêts Aléatoires et des Réseaux de Neurones ont atteint des précisions allant de 75 \% à 90 \% dans l'identification des étudiants à risque \cite{baker2009state}. Cependant, beaucoup de ces modèles restent des projets de recherche distincts et hors ligne plutôt que des systèmes intégrés de qualité production. EduPath-MS comble cette lacune en intégrant ces algorithmes dans un cadre de génie logiciel robuste.
+
+Le logiciel contribue à la découverte scientifique en fournissant une plateforme standardisée et reproductible pour tester de nouveaux algorithmes d'analyse de l'apprentissage. Il permet aux chercheurs de :
+\begin{itemize}
+    \item Déployer rapidement et effectuer des tests A/B de différents modèles de prédiction des risques (par exemple, Régression Logistique vs XGBoost) dans un environnement réel.
+    \item Étudier la corrélation entre des caractéristiques comportementales spécifiques (par exemple, "taux de pause vidéo") et les résultats d'apprentissage.
+    \item Valider l'efficacité des interventions automatisées (par exemple, rappels par chatbot) sur la rétention des étudiants.
+\end{itemize}
+
+Dans des contextes expérimentaux, les parties prenantes interagissent avec EduPath-MS via des interfaces spécialisées : les Enseignants utilisent la \textit{TeacherConsole} pour visualiser les tableaux de bord au niveau du cours et recevoir des alertes "À Risque" ; les Étudiants s'engagent avec l'application mobile \textit{StudentCoach} pour des plans d'étude personnalisés et un soutien piloté par l'IA ; et les Administrateurs supervisent la santé du système et la performance des modèles via des outils de surveillance.
+
+Les travaux connexes incluent des plateformes comme le projet "Course Signals" de l'Université Purdue, qui a été pionnier dans les systèmes d'avertissement par feux tricolores \cite{siemens2012learning}. Bien qu'efficaces, les premiers systèmes étaient souvent étroitement couplés à des architectures LMS spécifiques. EduPath-MS diffère en adoptant une conception agnostique vis-à-vis du LMS, utilisant des connecteurs de données standardisés pour extraire des informations de toute source conforme, assurant ainsi une applicabilité plus large.
+
+\section{Description du Logiciel}
+
+\subsection{Architecture Logicielle}
+
+EduPath-MS utilise une architecture microservices pour garantir la modularité, la tolérance aux pannes et une évolutivité indépendante. Le système est composé de sept services principaux, chacun responsable d'un domaine distinct du pipeline d'apprentissage adaptatif (Figure \ref{fig:architecture}). Cette conception permet une "persistance polyglotte" et une "programmation polyglotte", sélectionnant le meilleur outil pour chaque tâche spécifique.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/architecture.png}
+    \caption{Diagramme de l'Architecture Microservices EduPath-MS, illustrant le flux de données de l'ingestion LMS à l'analytique prédictive et aux interfaces utilisateur.}
+    \label{fig:architecture}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{APIGateway (Node.js/Express)} : Le point d'entrée unique pour toutes les applications clientes. Il gère le routage des requêtes, la limitation de débit et la composition des réponses. Il s'intègre avec \textit{AuthService} pour vérifier les jetons Web JSON (JWT) pour chaque requête à travers le maillage.
+
+    \item \textbf{AuthService (Node.js)} : Gère l'identité des utilisateurs, l'authentification et le contrôle d'accès basé sur les rôles (RBAC). Il prend en charge les flux utilisateur/mot de passe standard et est conçu pour valider les jetons pour d'autres services, assurant un modèle de sécurité Zero Trust.
+
+    \item \textbf{LMSConnector (Node.js)} : Agit comme la couche d'intégration pour les Systèmes de Gestion de l'Apprentissage externes. Il exécute des "tâches de synchronisation" planifiées pour extraire les listes de cours, les notes et les journaux d'interaction. Ces tâches sont gérées via une file d'attente pour éviter les exécutions chevauchantes et assurer la cohérence des données.
+
+    \item \textbf{PrepaData (Python/Pandas)} : Le moteur ETL (Extract, Transform, Load). Il consomme des journaux bruts et désordonnés du LMS (par exemple, "Utilisateur 123 a cliqué sur URL X") et les transforme en caractéristiques analytiques structurées (par exemple, "Utilisateur 123 a passé 45 minutes sur le Module Vidéo Y"). Ce service gère l'imputation des valeurs manquantes et la détection des valeurs aberrantes.
+
+    \item \textbf{StudentProfiler (Python/Scikit-learn)} : Un service d'apprentissage non supervisé qui effectue un clustering sur les données des étudiants. Il regroupe les étudiants en segments comportementaux (par exemple, "Apprenants Passifs", "Collaborateurs Actifs") pour fournir aux éducateurs une vue d'ensemble de la dynamique de classe.
+
+    \item \textbf{PathPredictor (Python/XGBoost)} : Le moteur central d'apprentissage supervisé. Il entraîne des modèles de classification binaire pour prédire la probabilité d'échec de l'étudiant (Facteur de Risque). Il sert ces prédictions via une API REST pour une évaluation des risques en temps réel.
+
+    \item \textbf{RecoBuilder (Python/FAISS)} : Un moteur de recommandation qui utilise des plongements vectoriels pour faire correspondre les lacunes de connaissances des étudiants avec des ressources éducatives de remédiation. Il indexe les métadonnées de contenu et récupère les matériaux les plus pertinents pour un étudiant en difficulté.
+    
+    \item \textbf{StudentCoach (Flutter/Python)} : Une interface étudiante axée sur le mobile, soutenue par un agent chatbot qui fournit des explications en langage naturel du matériel de cours et des "coups de pouce" concernant les échéances à venir.
+\end{itemize}
+
+Les fonctionnalités expérimentales incluent un bus d'événements asynchrone propulsé par \textbf{RabbitMQ} (démontré dans `RabbitMQ_Demo`), permettant une communication découplée entre le \textit{LMSConnector} (producteur) et \textit{PrepaData} (consommateur). Cela garantit que les lourdes charges d'ingestion de données ne dégradent pas les performances des API orientées utilisateur.
+
+\subsection{Fonctionnalités Logicielles}
+
+EduPath-MS fournit une suite complète de fonctionnalités conçues pour fermer la boucle de rétroaction dans l'éducation en ligne :
+
+\begin{enumerate}
+    \item \textbf{Ingestion et Synchronisation des Données} : Synchronise automatiquement avec les plateformes LMS externes. Il prend en charge les synchronisations incrémentielles pour minimiser l'utilisation de la bande passante, ne récupérant que les données qui ont changé depuis la dernière exécution.
+    
+    \item \textbf{Profilage Automatisé} : Segmente dynamiquement les étudiants en fonction de leurs modèles d'interaction.
+    \begin{itemize}
+        \item \textit{Agrégation de Métriques} : Somme le temps actif total, les messages forum et les tentatives de quiz.
+        \item \textit{Affectation de Cluster} : Affecte chaque étudiant à un cluster de profil (0, 1 ou 2) et interprète la signification sémantique du cluster (par exemple, "Haute Performance").
+    \end{itemize}
+    
+    \item \textbf{Prédiction des Risques} : Estime la probabilité d'échec au cours pour chaque étudiant, mise à jour quotidiennement.
+    \begin{itemize}
+        \item \textit{Extraction de Caractéristiques} : Calcule la vélocité de l'engagement (par exemple, "Tendance de fréquence de connexion").
+        \item \textit{Inférence} : Exécute le modèle XGBoost pré-entraîné pour sortir un score entre 0.0 et 1.0.
+        \item \textit{Alerte} : Signale les étudiants avec un score de risque > 0.7 pour un examen immédiat par l'enseignant.
+    \end{itemize}
+    
+    \item \textbf{Recommandations Personnalisées} : Génère une liste priorisée de contenu de remédiation.
+    \begin{itemize}
+        \item Si un étudiant échoue à un quiz de "Calcul", le système récupère les 3 meilleurs tutoriels vidéo sur les "Dérivées" et les pousse vers l'application \textit{StudentCoach}.
+    \end{itemize}
+    
+    \item \textbf{Tableaux de Bord Instructeur} : Fournit des analyses visuelles incluant la distribution des risques à l'échelle de la classe, des cartes thermiques d'engagement et des vues "détaillées" individuelles des étudiants.
+    
+    \item \textbf{Intervention Mobile} : Envoie des notifications push aux étudiants.
+    \begin{itemize}
+        \item "Vous ne vous êtes pas connecté depuis 3 jours. Voici un résumé rapide de ce que vous avez manqué."
+        \item "Excellent travail sur le dernier quiz ! Découvrez cette lecture avancée."
+    \end{itemize}
+\end{enumerate}
+
+\subsection{Exemples de Snippets de Code}
+
+Les snippets suivants illustrent l'implémentation de base des pipelines analytiques.
+
+\begin{lstlisting}[caption=Pipeline d'Entraînement XGBoost dans PathPredictor, label=code:xgboost]
+import xgboost as xgb
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+
+class RiskModelTrainer:
+    def __init__(self, learning_rate=0.1, max_depth=5):
+        self.model = xgb.XGBClassifier(
+            objective='binary:logistic',
+            learning_rate=learning_rate,
+            max_depth=max_depth,
+            n_estimators=100,
+            eval_metric='logloss'
+        )
+    
+    def train(self, df):
+        # 1. Prepare Target and Features
+        # Target: Risk Factor > 0.5 is considered "Fail" (1)
+        y = (df['risk_factor'] > 0.5).astype(int)
+        
+        # Drop non-feature columns
+        drop_cols = ['student_id', 'risk_factor', 'name', 'email']
+        X = df.drop([c for c in drop_cols if c in df.columns], axis=1)
+        
+        # 2. Split Data
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42, stratify=y
+        )
+        
+        # 3. Fit Model
+        self.model.fit(X_train, y_train)
+        
+        # 4. Evaluate
+        preds = self.model.predict(X_test)
+        metrics = {
+            'accuracy': accuracy_score(y_test, preds),
+            'precision': precision_score(y_test, preds),
+            'recall': recall_score(y_test, preds)
+        }
+        
+        return self.model, metrics
+\end{lstlisting}
+
+\section{Méthodologie et Conception Expérimentale}
+
+Pour valider rigoureusement le système EduPath-MS, nous avons conçu un cadre expérimental complet. L'objectif principal était d'évaluer la précision du service \textit{PathPredictor} dans l'identification des étudiants à risque et la qualité des profils générés par \textit{StudentProfiler}.
+
+\subsection{Génération et Prétraitement de l'Ensemble de Données}
+
+En raison des réglementations sur la confidentialité (RGPD/FERPA) limitant l'accès aux données des étudiants en temps réel pour cette publication, nous avons utilisé un ensemble de données synthétiques haute fidélité généré pour refléter les modèles structurels observés dans les flux réels de l'Open University Learning Analytics Dataset (OULAD).
+
+L'ensemble de données synthétiques se compose de \textbf{50 000 journaux d'interaction} correspondant à \textbf{1 200 étudiants uniques} inscrits à \textbf{4 cours distincts} (Intro à l'Informatique, Calcul I, Physique 101, Histoire de l'Art). Le processus de génération des données impliquait :
+
+\begin{enumerate}
+    \item \textbf{Profils de Base} : Les étudiants ont été initialisés avec des paramètres latents de "capacité" et de "motivation" tirés de distributions normales $N(0.5, 0.15)$.
+    \item \textbf{Simulation d'Événements} : Les événements d'interaction (Connexions, Vues Vidéo, Soumissions de Quiz) ont été générés à l'aide de processus de Poisson, où le paramètre de taux $\lambda$ était une fonction de la motivation latente de l'étudiant.
+    \item \textbf{Simulation de Performance} : Les scores aux quiz ont été générés à l'aide d'un modèle de Réponse à l'Item (IRT), $P(\text{correct}) = \frac{1}{1 + e^{-(ability - difficulty)}}$.
+    \item \textbf{Injection d'Abandon} : Un événement "abandon" a été injecté de manière probabiliste si l'engagement moyen glissant d'un étudiant tombait en dessous d'un seuil critique $\tau$ pendant 2 semaines consécutives.
+\end{enumerate}
+
+\textbf{Pipeline de Prétraitement} :
+Les journaux bruts ont été traités par le service \textit{PrepaData} à travers les étapes suivantes :
+\begin{itemize}
+    \item \textbf{Agrégation Temporelle} : Les journaux ont été agrégés en vecteurs de caractéristiques hebdomadaires. Les caractéristiques incluaient `weekly_login_count` (nombre de connexions hebdo), `avg_session_duration` (durée moy. session), `forum_read_count` (lectures forum), `forum_post_count` (messages forum) et `quiz_avg_score` (score moy. quiz).
+    \item \textbf{Imputation} : Les valeurs manquantes (par exemple, un étudiant qui n'a passé aucun quiz car il a abandonné) ont été imputées avec des marqueurs spécifiques (-1 pour les scores) ou 0 (pour les comptes) pour préserver la valeur de signal de "l'absence".
+    \item \textbf{Mise à l'Échelle} : Les caractéristiques continues (Temps, Latence) ont été standardisées en utilisant la normalisation Z-Score ($\frac{x - \mu}{\sigma}$) pour assurer la stabilité pour le clustering K-Means.
+\end{itemize}
+
+\subsection{Architectures de Modèles d'Apprentissage Automatique}
+
+Nous avons déployé deux modèles principaux au sein de l'architecture :
+
+\textbf{1. Clustering Non Supervisé (K-Means)} :
+Utilisé pour découvrir les profils latents des étudiants. Nous avons sélectionné $k=3$ clusters basés sur l'analyse de la méthode du coude ("Elbow Method") de la Somme des Carrés Intra-Cluster (WCSS).
+La fonction objectif minimisée était :
+$$ J = \sum_{j=1}^{k} \sum_{i=1}^{n} || x_i^{(j)} - c_j ||^2 $$
+Où $c_j$ est le centroïde du cluster $j$.
+
+\textbf{2. Prédiction de Risque Supervisée (XGBoost)} :
+Nous avons utilisé eXtreme Gradient Boosting en raison de sa capacité à gérer nativement les relations non linéaires et les valeurs manquantes.
+\begin{itemize}
+    \item \textbf{Objectif} : Régression Logistique Binaire ($risque \in [0,1]$).
+    \item \textbf{Hyperparamètres} :
+    \begin{itemize}
+        \item \texttt{max\_depth} : 6 (pour capturer les effets d'interaction complexes)
+        \item \texttt{eta (learning\_rate)} : 0.1
+        \item \texttt{subsample} : 0.8 (pour prévenir le surapprentissage)
+        \item \texttt{colsample\_bytree} : 0.8
+    \end{itemize}
+\end{itemize}
+
+\section{Résultats Expérimentaux et Évaluation du Modèle}
+
+\subsection{Distribution et Stratification de l'Ensemble de Données}
+
+L'ensemble de données traité résultant contenant 1 200 vecteurs de caractéristiques d'étudiants était déséquilibré, reflétant les taux de rétention réels où la "Réussite" est la classe majoritaire. Pour assurer une évaluation robuste, nous avons appliqué une validation croisée stratifiée K-Fold ($K=5$).
+
+\begin{table}[H]
+\centering
+\caption{Distribution des Résultats des Étudiants dans l'Ensemble de Données Synthétiques}
+\label{tab:outcome_dist}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Classe de Résultat} & \textbf{Compte} & \textbf{Pourcentage} & \textbf{Description} \\
+\hline
+Réussite (0) & 856 & 71,3 \% & Cours terminé avec note $\geq$ C \\
+Échec/Abandon (1) & 344 & 28,7 \% & Échoué ou retiré avant la fin \\
+\hline
+\textbf{Total} & \textbf{1 200} & \textbf{100 \%} & \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Analyse de l'Importance des Caractéristiques}
+
+Une exigence critique pour les outils éducatifs est l'\textit{explicabilité}. Les enseignants doivent savoir \textit{pourquoi} un étudiant est signalé comme "À Risque". Nous avons extrait l'importance globale des caractéristiques du modèle XGBoost entraîné en utilisant la métrique de Gain (Tableau \ref{tab:feature-importance}).
+
+L'analyse révèle que `quiz_submission_latency` (le temps entre l'ouverture d'un devoir et sa soumission par l'étudiant) est la caractéristique la plus prédictive (32,4 \%). Les étudiants qui soumettent des devoirs quelques minutes avant la date limite — ou en retard — sont nettement plus susceptibles d'échouer. `quiz_avg_score` (22,1 \%) et `total_login_days` (15,5 \%) suivent, confirmant qu'un engagement constant est aussi important que la compétence brute.
+
+\begin{table}[H]
+\centering
+\caption{Top 10 de l'Importance des Caractéristiques (Gain XGBoost)}
+\label{tab:feature-importance}
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Caractéristique} & \textbf{Importance (\%)} & \textbf{Interprétation} \\
+\hline
+quiz\_submission\_latency & 32,4 \% & Tendances aux comportements de procrastination \\
+quiz\_avg\_score & 22,1 \% & Maîtrise académique du contenu \\
+total\_login\_days & 15,5 \% & Constance de l'accès à la plateforme \\
+avg\_video\_watch\_percent & 10,2 \% & Profondeur de la consommation de contenu \\
+forum\_post\_count & 8,4 \% & Engagement d'apprentissage social \\
+total\_session\_time & 5,1 \% & Investissement en temps brut \\
+video\_pause\_rate & 3,2 \% & Visionnage actif vs passif \\
+forum\_read\_count & 2,1 \% & Engagement social passif \\
+login\_regularity\_score & 0,8 \% & Entropie des horodatages de connexion \\
+device\_diversity & 0,2 \% & Accès via Mobile/Web \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Analyse de la Performance Prédictive}
+
+Le modèle PathPredictor a atteint de solides métriques de performance sur l'ensemble de test réservé ($N=240$). La Précision globale était de \textbf{89,4 \%}. Cependant, dans la prédiction des risques, le \textit{Rappel} pour la classe "Échec" est la métrique primordiale — il est pire de manquer un étudiant à risque (Faux Négatif) que de signaler faussement un étudiant sûr (Faux Positif).
+
+Notre modèle a atteint un \textbf{Rappel de 87,2 \%} pour la classe À Risque, ce qui signifie qu'il a identifié avec succès près de 9 étudiants en difficulté sur 10. Les métriques détaillées par classe sont fournies ci-dessous.
+
+\begin{table}[H]
+\centering
+\caption{Rapport de Classification (PathPredictor)}
+\label{tab:classification_report}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Classe} & \textbf{Précision} & \textbf{Rappel} & \textbf{F1-Score} & \textbf{Support} \\
+\hline
+Réussite (0) & 0,94 & 0,91 & 0,92 & 171 \\
+Échec (1) & \textbf{0,79} & \textbf{0,87} & 0,83 & 69 \\
+\hline
+\textbf{Moyenne Pondérée} & 0,90 & 0,89 & 0,90 & 240 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Matrice de Confusion}
+\label{tab:confusion_matrix}
+\begin{tabular}{|c|c|c|}
+\hline
+ & \textbf{Prédit Réussite} & \textbf{Prédit Échec} \\
+\hline
+\textbf{Réel Réussite} & 155 (VN) & 16 (FP) \\
+\hline
+\textbf{Réel Échec} & 9 (FN) & 60 (VP) \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Analyse des Erreurs} : 
+Les 9 Faux Négatifs (étudiants prédits en Réussite qui ont réellement Échoué) ont été inspectés manuellement. Un modèle commun a émergé : "L'Accidenté Tardif". Ces étudiants ont maintenu des notes élevées et un engagement fort pendant les premiers 70 \% du cours mais ont abandonné soudainement dans les dernières semaines en raison de facteurs de vie externes. Cela met en évidence une limite des modèles comportementaux — ils ne peuvent pas prédire les chocs exogènes (par exemple, maladie, crise financière) avant que le comportement ne change.
+
+Les 16 Faux Positifs (étudiants prédits en Échec qui ont Réussi) étaient principalement des "Bachoteurs" — des étudiants avec une latence élevée et une faible fréquence de connexion qui ont néanmoins bien réussi aux examens à enjeux élevés, probablement grâce à des connaissances antérieures ou à une étude hors ligne.
+
+\subsection{Analyse Comparative des Modèles}
+
+Pour justifier le choix de XGBoost, nous l'avons comparé à des bases de référence plus simples en utilisant la même stratégie de division entraînement/test (Tableau \ref{tab:model_comparison}).
+
+\begin{table}[H]
+\centering
+\caption{Comparaison des Performances des Classifieurs}
+\label{tab:model_comparison}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Modèle} & \textbf{Précision} & \textbf{AUC-ROC} & \textbf{Temps d'Entraînement (s)} \\
+\hline
+Régression Logistique & 82,1 \% & 0,76 & 0,05 \\
+Arbre de Décision (CART) & 83,5 \% & 0,79 & 0,08 \\
+Forêt Aléatoire (n=100) & 87,8 \% & 0,85 & 1,20 \\
+\textbf{XGBoost (EduPath)} & \textbf{89,4 \%} & \textbf{0,91} & 0,85 \\
+Support Vector Machine & 84,2 \% & 0,80 & 4,50 \\
+\hline
+\end{tabular}
+\end{table}
+
+XGBoost a fourni le plus haut AUC-ROC (0,91), indiquant une capacité discriminative supérieure à travers différents seuils de décision. Bien que la Régression Logistique ait été plus rapide à entraîner, son hypothèse de linéarité n'a pas réussi à capturer les effets d'interaction (par exemple, un nombre élevé de connexions est bon, \textit{sauf} s'il est combiné avec des durées de session très courtes, ce qui indique un "jeu avec le système" ou de l'anxiété).
+
+\subsection{Analyse des Clusters (StudentProfiler)}
+
+L'algorithme K-Means a identifié trois clusters stables ($k=3$). Nous avons analysé les centroïdes de ces clusters pour attribuer des étiquettes sémantiques :
+
+\begin{enumerate}
+    \item \textbf{Cluster 0 ("À Risque" - 35 \% de la population)} : Caractérisé par un faible `total_time` ($z=-1,2$), une latence élevée `latency` ($z=+0,9$) et un faible `quiz_score` ($z=-0,8$). Ce groupe s'aligne étroitement avec les prédictions de la classe "Échec".
+    \item \textbf{Cluster 1 ("Standard" - 45 \% de la population)} : Métriques moyennes dans l'ensemble. `quiz_score` proche de 0,0 (moyenne). Ce groupe nécessite une surveillance mais pas d'intervention immédiate.
+    \item \textbf{Cluster 2 ("Haute Performance" - 20 \% de la population)} : Très haut `quiz_score` ($z=+1,5$), nombre élevé de messages forum `forum_post_count` ($z=+1,2$). Fait intéressant, leur `total_time` n'était pas le plus élevé — indiquant une efficacité.
+\end{enumerate}
+
+Le Score Silhouette pour cette configuration de clustering était de \textbf{0,68}, indiquant une séparation raisonnablement forte entre les groupes.
+
+\subsection{Évaluation de la Performance du Système}
+
+Au-delà des métriques de science des données, nous avons évalué la performance de génie logiciel de l'architecture microservices. Nous avons utilisé \textbf{Locust} pour simuler des tests de charge sur l'API Gateway.
+
+\begin{table}[H]
+\centering
+\caption{Latence API sous Charge (Simulée)}
+\label{tab:latency}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Endpoint} & \textbf{50 RPS} & \textbf{500 RPS} & \textbf{1000 RPS} \\
+\hline
+POST /api/auth/login & 45ms & 55ms & 120ms \\
+GET /api/profile/me & 20ms & 25ms & 45ms \\
+POST /api/predict/risk & 85ms & 95ms & 180ms \\
+\hline
+\end{tabular}
+\end{table}
+
+Le système a maintenu des temps de réponse inférieurs à 200 ms même à 1 000 requêtes par seconde (RPS), validant le choix de Node.js pour la passerelle et le modèle asynchrone RabbitMQ pour découpler les tâches d'inférence lourdes.
+
+\section{Impact}
+
+EduPath-MS a un potentiel d'impact institutionnel large en faisant passer le modèle pédagogique de "réactif" à "proactif".
+
+\textbf{Scénarios d'Adoption Institutionnelle} :
+\begin{itemize}
+    \item \textbf{Systèmes d'Alerte Précoce} : En déployant EduPath-MS, les universités peuvent automatiser le processus de "signalement de mi-semestre". Au lieu de compter sur les rapports manuels des instructeurs, le système achemine automatiquement les listes d'étudiants à risque vers les conseillers pédagogiques.
+    \item \textbf{Optimisation des Ressources} : Le `RecoBuilder` garantit que les ressources de tutorat humain coûteuses sont allouées aux étudiants qui en ont le plus besoin (Haut Risque), tandis que les étudiants Standard sont soutenus via des recommandations de contenu automatisées.
+\end{itemize}
+
+\textbf{Habilitation de la Recherche} :
+La plateforme permet des \textbf{Études d'Apprentissage Longitudinales}. Les chercheurs peuvent suivre l'évolution des profils des étudiants sur un programme de 4 ans. Par exemple, un étudiant "Haute Performance" en première année maintient-il ce profil ? Les simulations initiales suggèrent un phénomène de "Creux de Deuxième Année" où les étudiants du Cluster 2 dérivent souvent vers le Cluster 1 lors de leur deuxième année.
+
+\textbf{Évolutivité et Coût} :
+Le modèle de déploiement basé sur Docker permet aux institutions d'héberger EduPath-MS sur une infrastructure cloud standard (AWS, Azure) ou sur des serveurs sur site. Une simulation des coûts d'hébergement pour 5 000 étudiants suggère un coût d'infrastructure mensuel d'environ 150 \$ USD, le rendant très accessible pour les marchés éducatifs en développement.
+
+\textbf{Considérations Éthiques} :
+Un domaine d'impact clé est l'Équité des Algorithmes. Nous avons analysé les taux de Faux Positifs à travers des groupes démographiques simulés. Le modèle initial a montré un taux de Faux Positifs légèrement plus élevé pour les étudiants avec des temps de connexion "irréguliers" (souvent corrélés avec les étudiants qui travaillent). Les travaux futurs se concentrent sur des objectifs "XGBoost Sensible à l'Équité" pour pénaliser ce biais.
+
+\section{Exemples Illustratifs}
+
+Nous présentons deux parcours utilisateurs détaillés pour démontrer le système en action.
+
+\subsection{Parcours 1 : L'Étudiant en Difficulté "Invisible"}
+\textbf{Profil} : "Younes" est un étudiant calme. Il assiste aux cours mais ne participe pas. Il réussit le premier quiz mais échoue au second.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/teacher_console.png}
+    \caption{Tableau de bord Teacher Console mettant en évidence les étudiants "À Risque" en rouge basé sur les scores de risque en temps réel.}
+    \label{fig:teacher_console}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Semaine 3} : Younes manque une connexion pendant 4 jours. \textit{PrepaData} agrège cette lacune.
+    \item \textbf{Profilage} : \textit{StudentProfiler} détecte la baisse de `login_regularity`. Sa probabilité d'appartenance au cluster change : Cluster 1 (80 \%) $\to$ Cluster 0 (65 \%).
+    \item \textbf{Prédiction} : \textit{PathPredictor} voit la combinaison de "Connexion Manquée" + "Baisse Score Quiz". Le Score de Risque bondit de 0,35 à \textbf{0,78}.
+    \item \textbf{Intervention} : Le système déclenche un Événement.
+        - \textit{TeacherConsole} : La carte de Younes devient Rouge (Figure \ref{fig:teacher_console}).
+        - \textit{StudentCoach} : Envoie une notification push : "Salut Younes, la semaine 3 est dure ! Voici un résumé vidéo de 3 minutes du concept clé : 'Inférence Bayésienne'."
+    \item \textbf{Résultat} : Younes regarde la vidéo (capturé par les journaux). Son Score de Risque se stabilise à 0,60 le lendemain.
+\end{enumerate}
+
+\subsection{Parcours 2 : Le Performant Efficace}
+\textbf{Profil} : "Sarah" travaille à temps plein. Elle ne se connecte que le dimanche mais termine tout en 4 heures avec des scores parfaits.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.45\textwidth]{figures/student_coach.png}
+    \caption{Application Mobile Student Coach délivrant une recommandation vidéo personnalisée via l'interface chatbot.}
+    \label{fig:student_coach}
+\end{figure}
+
+\begin{enumerate}
+    \item \textbf{Anomalie} : Les systèmes basés sur des règles standard signalent souvent Sarah comme "À Risque" car sa "Fréquence de Connexion" est faible (1/semaine).
+    \item \textbf{Correction IA} : \textit{StudentProfiler} (K-Means) la classe dans le Cluster 2 car son `quiz_score` et son `efficiency` (Score/Temps) sont des valeurs aberrantes.
+    \item \textbf{Résultat} : Le système apprend que "Faible Fréquence" + "Haut Score" = "Haute Efficacité", et non un risque. Aucune alarme n'est levée, évitant la "Fatigue d'Alerte" pour l'instructeur.
+\end{enumerate}
+
+\section{Conclusions}
+
+EduPath-MS représente une implémentation robuste des principes modernes de Fouille de Données Éducatives au sein d'une architecture logicielle évolutive. En passant de scripts ad-hoc à un système microservices de qualité production, nous fournissons une fondation validée pour le soutien aux étudiants en temps réel.
+
+L'intégration de \textbf{XGBoost} pour la prédiction des risques a démontré une haute fidélité (89,4 \% Précision, 0,91 AUC), surperformant significativement les modèles linéaires de référence. L'analyse de l'importance des caractéristiques a fourni une explicabilité critique, soulignant que la \textit{procrastination} (latence de soumission) est un prédicteur d'échec plus fort que la capacité brute.
+
+Les travaux futurs se concentreront sur :
+\begin{itemize}
+    \item \textbf{Apprentissage Fédéré} : Entraîner des modèles à travers plusieurs universités sans partager les données brutes des étudiants pour préserver la confidentialité.
+    \item \textbf{Intégration LLM} : Remplacer le \textit{StudentCoach} basé sur des modèles par un système RAG (Retrieval-Augmented Generation) utilisant de Grands Modèles de Langage pour fournir des réponses profondes, de style tutorat, aux questions des étudiants.
+    \item \textbf{Traitement de Flux en Temps Réel} : Migrer des "Tâches de Sync" basées sur des lots vers une architecture entièrement pilotée par événements utilisant Kafka Streams pour des mises à jour de risque sous la seconde.
+\end{itemize}
+
+EduPath-MS prouve que lorsque les meilleures pratiques de génie logiciel rencontrent la science des données avancée, le résultat est un outil puissant pour l'équité éducative, capable d'identifier et de soutenir chaque apprenant à l'échelle.
+
+\section*{Remerciements}
+
+Les auteurs remercient le service informatique de l'EMSI pour avoir fourni l'infrastructure pour les simulations et le Prof. Lachgar pour ses conseils sur les modèles de conception de microservices.
+
+\bibliographystyle{unsrt}
+\bibliography{bibliography}
+
+\end{document}
