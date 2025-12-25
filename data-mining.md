@@ -1,26 +1,32 @@
 # Data Mining & Machine Learning Report
 
-## 1. Concepts Definitions (Short Answers)
+## 1. Direct Answers (What is used?)
 
-### LSTM (Long Short-Term Memory)
-*   **What is it?**: A Recurrent Neural Network (RNN) designed to process sequences of data (like text or time series) and "remember" important patterns over long periods.
-*   **Status in Project**: **NOT USED**. We do not use deep learning for sequences in this version.
+### Q: Which Model is used in EduPath-MS?
+**Answer: XGBoost.**
+*   We use **XGBoost Classifier** (in `PathPredictor`) to predict if a student is "At Risk" based on their grades and activity.
+*   *Note*: **LSTM** and **Prophet** are **NOT** used in this project. They are just alternative technologies for different types of problems (Time Series) that we are not solving here.
 
-### Prophet
-*   **What is it?**: A forecasting tool by Meta (Facebook) that handles time-series data with strong seasonal trends and missing values.
-*   **Status in Project**: **NOT USED**.
-
-### Online vs. Offline Training
-*   **Offline Training (Batch)**:
-    *   **Definition**: Training the model on the **entire dataset** at once. The model is static until the next full retrain.
-    *   **Status in Project**: **USED**. We train the XGBoost and K-Means models on the full `student_analytics` table periodically.
-*   **Online Training (Incremental)**:
-    *   **Definition**: Updating the model continuously as individual data points arrive in real-time.
-    *   **Status in Project**: **NOT USED**.
+### Q: Is it Online or Offline Training?
+**Answer: Offline Training.**
+*   We use **Offline (Batch) Training**.
+*   **Why?**: The `PathPredictor` service reads the **entire** `student_analytics` table from the database and trains the model from scratch. It does not update "on-the-fly".
 
 ---
 
-## 2. Project Data & Architecture
+## 2. Concepts Definitions
+
+### LSTM (Long Short-Term Memory)
+*   **What is it?**: A Deep Learning model (RNN) great for sequences (text, speech, time series).
+*   **Status**: **NOT USED**.
+
+### Prophet
+*   **What is it?**: A Time-Series forecasting tool by Meta/Facebook, good for seasonal data.
+*   **Status**: **NOT USED**.
+
+---
+
+## 3. Project Data & Architecture
 *Based on the system implementation and data flow.*
 
 ### A. The Data Sources
@@ -34,26 +40,23 @@ The architecture relies on a **PostgreSQL** database enriched by an external **C
 
 2.  **External Dataset (CSV)**
     *   **File**: `external_data.csv`
-    *   **Content**: Enrichment attributes such as `study_hours_external` and `additional_score`.
-    *   **Purpose**: Simulates data from a third-party system (like a previous school) to enhance the student profile.
+    *   **Content**: Enrichment attributes like `study_hours_external` and `additional_score`.
+    *   **Purpose**: Simulates data from a third-party system coverage.
 
 ### B. Data Preparation Pipeline (ETL)
 The raw data is processed in `PrepaData/etl.py` to create a clean "Golden Dataset".
 
 1.  **Ingestion**: Raw logs are extracted from Postgres and merged with the CSV.
 2.  **Transformation**:
-    *   **Aggregation**: Logs are compressed into summary metrics: `total_actions`, `avg_score`, `total_time`.
-    *   **Risk Calculation**: A rule-based heuristic assigns a risk score:
-        *   *If Score < 50 OR Actions < 10 → **High Risk (1.0)**.*
-    *   **Imputation**: Missing values (`NaN`) are filled with `0`.
-3.  **Loading**: The clean dataset is saved to the `student_analytics` table.
+    *   **Aggregation**: Metrics calculated per student: `total_actions`, `avg_score`, `total_time`.
+    *   **Risk Calculation**: Heuristic rule: `Score < 50` OR `Actions < 10` = **High Risk**.
+    *   **Imputation**: Missing values filled with `0`.
+3.  **Loading**: Saved to `student_analytics` table.
 
 ### C. Architecture & Models
 The Microservices use the clean `student_analytics` table for inference.
 
-| Service | Model | Input | Output |
-| :--- | :--- | :--- | :--- |
-| **PathPredictor** | **XGBoost** (Supervised) | `avg_score`, `total_actions`, `total_time` | **Risk Probability**: Chance of failing. |
-| **StudentProfiler** | **K-Means** (Unsupervised) | `avg_score`, `total_actions`, `total_time` | **Persona**: "At Risk", "Standard", or "High Achiever". |
-| **RecoBuilder** | **Embeddings** (FAISS) | Course Text Content | **Recommendations**: Relevant study materials. |
-| **StudentCoach** | **LLM** (GPT-3.5) | User Chat Prompt | **AI Assistance**: Answers and explanations. |
+| Service | Model Used | Training Mode | Input | Output |
+| :--- | :--- | :--- | :--- | :--- |
+| **PathPredictor** | **XGBoost** | **Offline** | `avg_score`, `total_actions`, `total_time` | **Risk Probability** |
+| **StudentProfiler** | **K-Means** | **Offline** | `avg_score`, `total_actions`, `total_time` | **Persona** ("At Risk", etc) |
