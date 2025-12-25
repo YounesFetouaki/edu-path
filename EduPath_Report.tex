@@ -25,6 +25,9 @@
 \usepackage{subcaption}
 \usepackage{multirow}
 \usepackage{longtable}
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parskip}{1em}
 
 % ========== SECTION FORMATTING ==========
 \titleformat{\section}
@@ -81,6 +84,8 @@ Marrakech Campus, Morocco
 
 % ---------- ABSTRACT ----------
 \begin{abstract}
+\onehalfspacing
+\setlength{\parskip}{1em}
 EduPath-MS is a cloud-native, microservices-based adaptive learning system designed to address the critical challenge of student retention in large-scale online education environments. The platform integrates heterogeneous data streams from Learning Management Systems (LMS), real-time behavioral logs, and historical performance records to generate dynamic student profiles and predict academic risk. By employing a distributed architecture of specialized microservices—including \textit{StudentProfiler} for unsupervised clustering, \textit{PathPredictor} for supervised forecasting, and \textit{RecoBuilder} for personalized content recommendation—the system provides a reliable, explainable, and scalable solution for pedagogical intervention.
 
 The system operationalizes advanced machine learning techniques, specifically K-Means clustering for behavioral segmentation and eXtreme Gradient Boosting (XGBoost) for failure probability estimation. Validated on a synthetic dataset of 50,000 interaction logs representing 1,200 students, EduPath-MS achieves a risk prediction accuracy of 89.4\% and a profile segmentation Silhouette score of 0.68. The modular architecture ensures high availability and horizontal scalability, addressing the growing institutional demand for data-driven student success initiatives. Preliminary deployment simulations demonstrate the system's ability to process real-time events with sub-second latency, enabling immediate feedback loops for at-risk learners.
@@ -164,7 +169,7 @@ EduPath-MS employs a microservices architecture to ensure modularity, fault tole
     \item \textbf{StudentCoach (Flutter/Python)}: A mobile-first student interface backed by a chatbot agent that provides natural language explanations of course material and "nudges" regarding upcoming deadlines.
 \end{itemize}
 
-Experimental features include an asynchronous event bus powered by \textbf{RabbitMQ} (demonstrated in `RabbitMQ_Demo`), enabling decoupled communication between the \textit{LMSConnector} (producer) and \textit{PrepaData} (consumer). This ensures that heavy data ingestion loads do not degrade the performance of the user-facing APIs.
+Experimental features include an asynchronous event bus powered by \textbf{RabbitMQ} (demonstrated in \texttt{RabbitMQ\_Demo}), enabling decoupled communication between the \textit{LMSConnector} (producer) and \textit{PrepaData} (consumer). This ensures that heavy data ingestion loads do not degrade the performance of the user-facing APIs.
 
 \subsection{Software Functionalities}
 
@@ -267,7 +272,7 @@ The synthetic dataset consists of \textbf{50,000 interaction logs} corresponding
 \textbf{Preprocessing Pipeline}:
 The raw logs were processed by the \textit{PrepaData} service through the following steps:
 \begin{itemize}
-    \item \textbf{Temporal Aggregation}: Logs were aggregated into weekly feature vectors. Features included `weekly_login_count`, `avg_session_duration`, `forum_read_count`, `forum_post_count`, and `quiz_avg_score`.
+    \item \textbf{Temporal Aggregation}: Logs were aggregated into weekly feature vectors. Features included \texttt{weekly\_login\_count}, \texttt{avg\_session\_duration}, \texttt{forum\_read\_count}, \texttt{forum\_post\_count}, and \texttt{quiz\_avg\_score}.
     \item \textbf{Imputation}: Missing values (e.g., a student who took no quizzes because they dropped out) were imputed with specific markers (-1 for scores) or 0 (for counts) to preserve the signaling value of "missingness."
     \item \textbf{Scaling}: Continuous features (Time, Latency) were standardized using Z-Score normalization ($\frac{x - \mu}{\sigma}$) to ensure stability for K-Means clustering.
 \end{itemize}
@@ -295,6 +300,13 @@ We utilized eXtreme Gradient Boosting due to its ability to handle non-linear re
     \end{itemize}
 \end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/model_architecture_diagram.png}
+    \caption{Visual representation of the Machine Learning Pipeline in EduPath-MS, detailing the flow from LMS data ingestion to Risk Prediction.}
+    \label{fig:model_logic}
+\end{figure}
+
 \section{Experimental Results and Model Evaluation}
 
 \subsection{Dataset Distribution and Stratification}
@@ -321,7 +333,7 @@ Fail/Drop (1) & 344 & 28.7\% & Failed or withdrew before completion \\
 
 A critical requirement for educational tools is \textit{explainability}. Teachers need to know \textit{why} a student is flagged as "At Risk." We extracted the global feature importance from the trained XGBoost model using the Gain metric (Table \ref{tab:feature-importance}).
 
-The analysis reveals that `quiz_submission_latency` (the time between an assignment opening and the student submitting) is the single most predictive feature (32.4\%). Students who submit assignments minutes before the deadline—or late—are significantly more likely to fail. `quiz_avg_score` (22.1\%) and `total_login_days` (15.5\%) follow, confirming that consistent engagement is as important as raw competence.
+The analysis reveals that \texttt{quiz\_submission\_latency} (the time between an assignment opening and the student submitting) is the single most predictive feature (32.4\%). Students who submit assignments minutes before the deadline—or late—are significantly more likely to fail. \texttt{quiz\_avg\_score} (22.1\%) and \texttt{total\_login\_days} (15.5\%) follow, confirming that consistent engagement is as important as raw competence.
 
 \begin{table}[H]
 \centering
@@ -366,6 +378,13 @@ Fail (1) & \textbf{0.79} & \textbf{0.87} & 0.83 & 69 \\
 \hline
 \end{tabular}
 \end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/roc_curve.png}
+    \caption{ROC Curve for the PathPredictor XGBoost Model, demonstrating a high Area Under Curve (AUC) of 0.91, indicating strong separability between Pass and Fail classes.}
+    \label{fig:roc_curve}
+\end{figure}
 
 \begin{table}[H]
 \centering
@@ -415,9 +434,9 @@ XGBoost provided the highest AUC-ROC (0.91), indicating superior discriminative 
 The K-Means algorithm identified three stable clusters ($k=3$). We analyzed the centroids of these clusters to assign semantic labels:
 
 \begin{enumerate}
-    \item \textbf{Cluster 0 ("At Risk" - 35\% of population)}: Characterized by low `total_time` ($z=-1.2$), high `latency` ($z=+0.9$), and low `quiz_score` ($z=-0.8$). This group aligns closely with the "Fail" class predictions.
-    \item \textbf{Cluster 1 ("Standard" - 45\% of population)}: Average metrics across the board. `quiz_score` near 0.0 (mean). This group requires monitoring but not immediate intervention.
-    \item \textbf{Cluster 2 ("High Achiever" - 20\% of population)}: Very high `quiz_score` ($z=+1.5$), high `forum_post_count` ($z=+1.2$). Interestingly, their `total_time` was not the highest—indicating efficiency.
+    \item \textbf{Cluster 0 ("At Risk" - 35\% of population)}: Characterized by low \texttt{total\_time} ($z=-1.2$), high \texttt{latency} ($z=+0.9$), and low \texttt{quiz\_score} ($z=-0.8$). This group aligns closely with the "Fail" class predictions.
+    \item \textbf{Cluster 1 ("Standard" - 45\% of population)}: Average metrics across the board. \texttt{quiz\_score} near 0.0 (mean). This group requires monitoring but not immediate intervention.
+    \item \textbf{Cluster 2 ("High Achiever" - 20\% of population)}: Very high \texttt{quiz\_score} ($z=+1.5$), high \texttt{forum\_post\_count} ($z=+1.2$). Interestingly, their \texttt{total\_time} was not the highest—indicating efficiency.
 \end{enumerate}
 
 The Silhouette Score for this clustering configuration was \textbf{0.68}, indicating a reasonably strong separation between groups.
@@ -478,7 +497,7 @@ We present two detailed user journeys to demonstrate the system in action.
 
 \begin{enumerate}
     \item \textbf{Week 3}: Younes misses a login for 4 days. \textit{PrepaData} aggregates this gap.
-    \item \textbf{Profiling}: \textit{StudentProfiler} detects the drop in `login_regularity`. His cluster membership probability shifts: Cluster 1 (80\%) $\to$ Cluster 0 (65\%).
+    \item \textbf{Profiling}: \textit{StudentProfiler} detects the drop in \texttt{login\_regularity}. His cluster membership probability shifts: Cluster 1 (80\%) $\to$ Cluster 0 (65\%).
     \item \textbf{Prediction}: \textit{PathPredictor} sees the combination of "Missed Login" + "Declining Quiz Score". The Risk Score jumps from 0.35 to \textbf{0.78}.
     \item \textbf{Intervention}: The system triggers an Event.
         - \textit{TeacherConsole}: Younes's card turns Red (Figure \ref{fig:teacher_console}).
@@ -498,7 +517,7 @@ We present two detailed user journeys to demonstrate the system in action.
 
 \begin{enumerate}
     \item \textbf{Anomaly}: Standard Rule-Based systems often flag Sarah as "At Risk" because her "Login Frequency" is low (1/week).
-    \item \textbf{AI Correction}: \textit{StudentProfiler} (K-Means) groups her into Cluster 2 because her `quiz_score` and `efficiency` (Score/Time) are outliers.
+    \item \textbf{AI Correction}: \textit{StudentProfiler} (K-Means) groups her into Cluster 2 because her \texttt{quiz\_score} and \texttt{efficiency} (Score/Time) are outliers.
     \item \textbf{Result}: The system learns that "Low Frequency" + "High Score" = "High Efficiency," not risk. No alarm is raised, preventing "Alert Fatigue" for the instructor.
 \end{enumerate}
 
