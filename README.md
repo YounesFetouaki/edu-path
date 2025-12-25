@@ -53,6 +53,6 @@ The entire platform is containerized.
 - **ML**: Scikit-Learn, XGBoost
 
 
-<img width="2388" height="1321" alt="image" src="https://github.com/user-attachments/assets/b20b4a69-711e-46fa-80f5-2f2b62298b01" />
+<img width="2388" height="1321" alt="image" src="https://github.com/user-attachments/assets/b20b4a69-711e-46fa-80f5-2f2b62298b01" href="https://drive.google.com/file/d/14sj0A3I6HVZzpjuiku3mrpG3mlBDUGDQ/view?usp=drive_link"/>
 [![Watch the video](https://github.com/user-attachments/assets/b20b4a69-711e-46fa-80f5-2f2b62298b01)](https://drive.google.com/file/d/14sj0A3I6HVZzpjuiku3mrpG3mlBDUGDQ/view?usp=drive_link)
 
