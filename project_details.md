@@ -59,6 +59,17 @@ The system is designed as a distributed mesh of specialized services.
     2.  **Health Check**: Consul pings the service every 10s. If it fails, it is removed from the registry.
     3.  **Discovery**: Other services query Consul to find the current active address of `Student Coach`.
 
+### D. Consul UI Demo (What to Show)
+When you open [http://localhost:8500](http://localhost:8500), you will see:
+1.  **Services Tab**:
+    *   `consul`: The registry service itself.
+    *   `auth-service-3005`: The Node.js Authentication service (Registered via `consul` npm package).
+    *   `student-coach-backend-5000`: The Python AI Coach service (Registered via `python-consul`).
+    *   *Status*: All should show 🟢 **Passing** (meaning their health check URLs are reachable).
+2.  **Nodes Tab**:
+    *   Shows the container/node running these services (e.g., `edupath-consul`).
+
+
 ### B. RabbitMQ (Message Broker)
 *   **Role**: Asynchronous Communication.
 *   **Purpose**: Decouples services to improve performance and reliability.
