@@ -54,7 +54,8 @@ The entire platform is containerized.
 
 ## Vids : 
 
-Watch the web application video : https://drive.google.com/file/d/1wzEcvV2ovoe-FRcIa5FCr8WuhU9oudcX/view?usp=drive_link
-Watch the mobile app video : https://drive.google.com/file/d/14sj0A3I6HVZzpjuiku3mrpG3mlBDUGDQ/view?usp=drive_link
+- Watch the web application video : https://drive.google.com/file/d/1wzEcvV2ovoe-FRcIa5FCr8WuhU9oudcX/view?usp=drive_link
+
+- Watch the mobile app video : https://drive.google.com/file/d/14sj0A3I6HVZzpjuiku3mrpG3mlBDUGDQ/view?usp=drive_link
 
 
