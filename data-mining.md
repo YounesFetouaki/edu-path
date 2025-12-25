@@ -1,78 +1,59 @@
-# Data Mining & Machine Learning Overview
+# Data Mining & Machine Learning Report
 
-## 1. Concepts Definitions
+## 1. Concepts Definitions (Short Answers)
 
-### What is LSTM (Long Short-Term Memory)?
-**LSTM** is a specialized type of Recurrent Neural Network (RNN) designed to learn long-term dependencies in sequential data.
-*   **Problem Solved**: Standard RNNs suffer from the "vanishing gradient" problem, making them forget earlier inputs in long sequences.
-*   **Mechanism**: LSTMs use a system of **gates** (Input, Forget, and Output gates) to control the flow of information. They can explicitly decide what to remember and what to discard over long periods.
-*   **Use Cases**: Time-series forecasting, text generation, speech recognition, and analyzing student learning trajectories over prolonged courses.
+### LSTM (Long Short-Term Memory)
+*   **What is it?**: A Recurrent Neural Network (RNN) designed to process sequences of data (like text or time series) and "remember" important patterns over long periods.
+*   **Status in Project**: **NOT USED**. We do not use deep learning for sequences in this version.
 
-### What is Prophet?
-**Prophet** is an open-source forecasting procedure developed by Facebook (Meta).
-*   **Mechanism**: It is based on an **additive model** that fits non-linear trends with yearly, weekly, and daily seasonality, plus holiday effects. It works best with time series that have strong seasonal effects and several seasons of historical data.
-*   **Key Advantage**: unlike Arima or LSTM, Prophet is robust to missing data and shifts in the trend, and typically handles outliers well. It is very user-friendly features for tuning "changepoints" in trends.
+### Prophet
+*   **What is it?**: A forecasting tool by Meta (Facebook) that handles time-series data with strong seasonal trends and missing values.
+*   **Status in Project**: **NOT USED**.
 
 ### Online vs. Offline Training
-
-| Feature | **Offline Training** (Batch Learning) | **Online Training** (Incremental Learning) |
-| :--- | :--- | :--- |
-| **Data Usage** | Trains on the **entire dataset** at once. | Trains on **individual data points** or mini-batches as they arrive. |
-| **Model Updates** | Static model (e.g., v1.0). Must simply retrain on the whole new dataset to update. | Dynamic model (e.g., v1.0 -> v1.01). Updates weights continuously in real-time. |
-| **Cost** | Computationally expensive peaks (retraining takes hours/days). | Constant low computation, but requires complex infrastructure. |
-| **Use Case in EduPath** | **Used in EduPath**. We retrain the `PathPredictor` XGBoost model nightly/weekly based on collected logs. | Used in high-velocity systems like stock trading or ad bidding. |
-
-### Difficulties and Perspectives (Challenges)
-*   **Data Quality**: "Garbage In, Garbage Out". Inconsistent formats from different LMS sources (Moodle vs Canvas) require heavy cleaning.
-*   **Cold Start**: New students have no history, making early predictions difficult.
-*   **Scalability**: processing millions of logs for thousands of students requires distributed computing (like Spark) rather than simple Pandas scripts.
-*   **Overfitting**: Models might memorize a specific semester's pattern rather than general learning behaviors.
+*   **Offline Training (Batch)**:
+    *   **Definition**: Training the model on the **entire dataset** at once. The model is static until the next full retrain.
+    *   **Status in Project**: **USED**. We train the XGBoost and K-Means models on the full `student_analytics` table periodically.
+*   **Online Training (Incremental)**:
+    *   **Definition**: Updating the model continuously as individual data points arrive in real-time.
+    *   **Status in Project**: **NOT USED**.
 
 ---
 
-## 2. EduPath-MS Project Specifics
+## 2. Project Data & Architecture
+*Based on the system implementation and data flow.*
 
-### Data Origin
-In this project (`EduPath-MS`), the data is **Synthetic / Simulated**.
-We do not use real-world private student data for this prototype. Instead, we generate it using the **`PrepaData`** microservice.
-*   **Source Code**: `PrepaData/generate_dataset.py`
-*   **Method**: We use the **Faker** library and `random` module to generate realistic `student_logs` (login, take_quiz, etc.) and profiles.
-*   **External Data**: The system simulates an "External Dataset" (e.g., certificates from Kaggle) by generating a CSV file named `external_data.csv` locally during the setup process.
+### A. The Data Sources
+The architecture relies on a **PostgreSQL** database enriched by an external **CSV** file.
 
-### Data Cleaning Process
-Data cleaning is handled by the **`PrepaData/etl.py`** script (Extract, Transform, Load) and the specific model services.
+1.  **Core Operational Data (PostgreSQL)**
+    *   **Students & Users**: Identity management (`students`, `users`).
+    *   **Academics**: Course structure (`courses`, `classes`, `assignments`).
+    *   **Performance**: Grades and results (`grades`, `quizzes`).
+    *   **Activity Logs**: Raw events like logins and clicks (`student_logs`).
 
-1.  **Extraction**: Raw logs are pulled from the Postgres `student_logs` table.
-2.  **Transformation (Aggregations)**:
-    *   We group raw logs by `student_id`.
-    *   We calculate metrics: `total_actions`, `avg_score`, `total_time`.
-3.  **Handling Missing Values**:
-    *   `fillna(0)` is used for students with no activity (replacing `NaN` with 0).
-4.  **Feature Engineering (Risk Calculation)**:
-    *   A heuristic is applied: If `avg_score < 50` or `total_actions < 10`, `risk_factor` is set to **1.0 (High Risk)**.
-5.  **Normalization (Standard Scaling)**:
-    *   **Specific to StudentProfiler**: Before running K-Means clustering, we use `StandardScaler` from `scikit-learn` to normalize features (making `total_time` in seconds comparable to `avg_score` 0-100).
-    *   *Note*: The `PathPredictor` (XGBoost) uses the raw features without scaling, as tree-based models are robust to unscaled data.
+2.  **External Dataset (CSV)**
+    *   **File**: `external_data.csv`
+    *   **Content**: Enrichment attributes such as `study_hours_external` and `additional_score`.
+    *   **Purpose**: Simulates data from a third-party system (like a previous school) to enhance the student profile.
 
-### Microservices & Models Architecture
-The system follows a **Microservices Architecture**, orchestrated via **Docker Compose** and **Consul**.
+### B. Data Preparation Pipeline (ETL)
+The raw data is processed in `PrepaData/etl.py` to create a clean "Golden Dataset".
 
-| Service Name | Technology | Role | Model / Logic |
+1.  **Ingestion**: Raw logs are extracted from Postgres and merged with the CSV.
+2.  **Transformation**:
+    *   **Aggregation**: Logs are compressed into summary metrics: `total_actions`, `avg_score`, `total_time`.
+    *   **Risk Calculation**: A rule-based heuristic assigns a risk score:
+        *   *If Score < 50 OR Actions < 10 → **High Risk (1.0)**.*
+    *   **Imputation**: Missing values (`NaN`) are filled with `0`.
+3.  **Loading**: The clean dataset is saved to the `student_analytics` table.
+
+### C. Architecture & Models
+The Microservices use the clean `student_analytics` table for inference.
+
+| Service | Model | Input | Output |
 | :--- | :--- | :--- | :--- |
-| **PrepaData** | Python | **ETL Pipeline**: Generates and cleans data. | N/A |
-| **StudentProfiler** | Python | **Unsupervised Learning**: Segments students. | **K-Means Clustering** (`k=3`) |
-| **PathPredictor** | Python | **Supervised Learning**: Predicts failure risk. | **XGBoost Classifier** |
-| **StudentCoach** | Python (FastAPI) | **GenAI**: Chatbot & Quiz Generator. | **LLM (GPT-3.5-turbo)** |
-| **RecoBuilder** | Python | **Recommender System**: Finds relevant content. | **Embeddings (MiniLM) + FAISS** |
-| **APIGateway** | Node.js | **Routing**: Single entry point for all clients. | N/A |
-| **AuthService** | Node.js | **Security**: JWT Authentication. | N/A |
-| **LMSConnector** | Node.js | **Integration**: Adapter for external LMS. | N/A |
-| **RabbitMQ** | Erlang | **Messaging**: Async event bus (e.g., "Quiz Finished" events). | N/A |
-
-#### Architecture Diagram Summary
-1.  **Client** hits **APIGateway**.
-2.  **APIGateway** routes to **StudentCoach** (for chat) or **AuthService** (for login).
-3.  **RabbitMQ** decouples the heavy AI jobs:
-    *   When a student finishes a quiz, **StudentCoach** publishes a message.
-    *   **StudentProfiler** consumes it to update the student's cluster in the background.
-    *   **PathPredictor** re-evaluates the risk score offline or on-demand.
+| **PathPredictor** | **XGBoost** (Supervised) | `avg_score`, `total_actions`, `total_time` | **Risk Probability**: Chance of failing. |
+| **StudentProfiler** | **K-Means** (Unsupervised) | `avg_score`, `total_actions`, `total_time` | **Persona**: "At Risk", "Standard", or "High Achiever". |
+| **RecoBuilder** | **Embeddings** (FAISS) | Course Text Content | **Recommendations**: Relevant study materials. |
+| **StudentCoach** | **LLM** (GPT-3.5) | User Chat Prompt | **AI Assistance**: Answers and explanations. |
