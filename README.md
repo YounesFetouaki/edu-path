@@ -52,8 +52,9 @@ The entire platform is containerized.
 - **Data**: PostgreSQL, MinIO
 - **ML**: Scikit-Learn, XGBoost
 
+## Vids : 
 
-<img width="2388" height="1321" alt="image" src="https://github.com/user-attachments/assets/b20b4a69-711e-46fa-80f5-2f2b62298b01" href="https://drive.google.com/file/d/14sj0A3I6HVZzpjuiku3mrpG3mlBDUGDQ/view?usp=drive_link"/>
-[![Watch the video](./image0.png)](<https://drive.google.com/file/d/14sj0A3I6HVZzpjuiku3mrpG3mlBDUGDQ/view?usp=drive_link>)
+Watch the web application video : https://drive.google.com/file/d/1wzEcvV2ovoe-FRcIa5FCr8WuhU9oudcX/view?usp=drive_link
+Watch the mobile app video : https://drive.google.com/file/d/14sj0A3I6HVZzpjuiku3mrpG3mlBDUGDQ/view?usp=drive_link
 
 
