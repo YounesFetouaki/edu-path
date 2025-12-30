@@ -25,6 +25,9 @@
 \usepackage{subcaption}
 \usepackage{multirow}
 \usepackage{longtable}
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parskip}{1em}
 
 % ========== SECTION FORMATTING ==========
 \titleformat{\section}
@@ -81,6 +84,8 @@ Campus de Marrakech, Maroc
 
 % ---------- ABSTRACT ----------
 \begin{abstract}
+\onehalfspacing
+\setlength{\parskip}{1em}
 EduPath-MS est un système d'apprentissage adaptatif natif pour le cloud et basé sur des microservices, conçu pour relever le défi critique de la rétention des étudiants dans les environnements d'éducation en ligne à grande échelle. La plateforme intègre des flux de données hétérogènes provenant de systèmes de gestion de l'apprentissage (LMS), des journaux comportementaux en temps réel et des historiques de performance pour générer des profils d'étudiants dynamiques et prédire les risques académiques. En employant une architecture distribuée de microservices spécialisés — incluant \textit{StudentProfiler} pour le clustering non supervisé, \textit{PathPredictor} pour la prévision supervisée, et \textit{RecoBuilder} pour la recommandation de contenu personnalisé — le système fournit une solution fiable, explicable et évolutive pour l'intervention pédagogique.
 
 Le système opérationnalise des techniques avancées d'apprentissage automatique, spécifiquement le clustering K-Means pour la segmentation comportementale et eXtreme Gradient Boosting (XGBoost) pour l'estimation de la probabilité d'échec. Validé sur un ensemble de données synthétiques de 50 000 journaux d'interactions représentant 1 200 étudiants, EduPath-MS atteint une précision de prédiction des risques de 89,4 \% et un score Silhouette de segmentation de profil de 0,68. L'architecture modulaire assure une haute disponibilité et une évolutivité horizontale, répondant à la demande institutionnelle croissante pour des initiatives de réussite étudiante basées sur les données. Des simulations de déploiement préliminaires démontrent la capacité du système à traiter des événements en temps réel avec une latence inférieure à la seconde, permettant des boucles de rétroaction immédiates pour les apprenants à risque.
@@ -164,7 +169,7 @@ EduPath-MS utilise une architecture microservices pour garantir la modularité, 
     \item \textbf{StudentCoach (Flutter/Python)} : Une interface étudiante axée sur le mobile, soutenue par un agent chatbot qui fournit des explications en langage naturel du matériel de cours et des "coups de pouce" concernant les échéances à venir.
 \end{itemize}
 
-Les fonctionnalités expérimentales incluent un bus d'événements asynchrone propulsé par \textbf{RabbitMQ} (démontré dans `RabbitMQ_Demo`), permettant une communication découplée entre le \textit{LMSConnector} (producteur) et \textit{PrepaData} (consommateur). Cela garantit que les lourdes charges d'ingestion de données ne dégradent pas les performances des API orientées utilisateur.
+Les fonctionnalités expérimentales incluent un bus d'événements asynchrone propulsé par \textbf{RabbitMQ} (démontré dans \texttt{RabbitMQ\_Demo}), permettant une communication découplée entre le \textit{LMSConnector} (producteur) et \textit{PrepaData} (consommateur). Cela garantit que les lourdes charges d'ingestion de données ne dégradent pas les performances des API orientées utilisateur.
 
 \subsection{Fonctionnalités Logicielles}
 
@@ -267,7 +272,7 @@ L'ensemble de données synthétiques se compose de \textbf{50 000 journaux d'int
 \textbf{Pipeline de Prétraitement} :
 Les journaux bruts ont été traités par le service \textit{PrepaData} à travers les étapes suivantes :
 \begin{itemize}
-    \item \textbf{Agrégation Temporelle} : Les journaux ont été agrégés en vecteurs de caractéristiques hebdomadaires. Les caractéristiques incluaient `weekly_login_count` (nombre de connexions hebdo), `avg_session_duration` (durée moy. session), `forum_read_count` (lectures forum), `forum_post_count` (messages forum) et `quiz_avg_score` (score moy. quiz).
+    \item \textbf{Agrégation Temporelle} : Les journaux ont été agrégés en vecteurs de caractéristiques hebdomadaires. Les caractéristiques incluaient \texttt{weekly\_login\_count}, \texttt{avg\_session\_duration}, \texttt{forum\_read\_count}, \texttt{forum\_post\_count}, et \texttt{quiz\_avg\_score}.
     \item \textbf{Imputation} : Les valeurs manquantes (par exemple, un étudiant qui n'a passé aucun quiz car il a abandonné) ont été imputées avec des marqueurs spécifiques (-1 pour les scores) ou 0 (pour les comptes) pour préserver la valeur de signal de "l'absence".
     \item \textbf{Mise à l'Échelle} : Les caractéristiques continues (Temps, Latence) ont été standardisées en utilisant la normalisation Z-Score ($\frac{x - \mu}{\sigma}$) pour assurer la stabilité pour le clustering K-Means.
 \end{itemize}
@@ -295,6 +300,13 @@ Nous avons utilisé eXtreme Gradient Boosting en raison de sa capacité à gére
     \end{itemize}
 \end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/model_architecture_diagram.png}
+    \caption{Représentation visuelle du Pipeline d'Apprentissage Automatique dans EduPath-MS, détaillant le flux de l'ingestion des données LMS à la Prédiction de Risque.}
+    \label{fig:model_logic}
+\end{figure}
+
 \section{Résultats Expérimentaux et Évaluation du Modèle}
 
 \subsection{Distribution et Stratification de l'Ensemble de Données}
@@ -321,7 +333,7 @@ Réussite (0) & 856 & 71,3 \% & Cours terminé avec note $\geq$ C \\
 
 Une exigence critique pour les outils éducatifs est l'\textit{explicabilité}. Les enseignants doivent savoir \textit{pourquoi} un étudiant est signalé comme "À Risque". Nous avons extrait l'importance globale des caractéristiques du modèle XGBoost entraîné en utilisant la métrique de Gain (Tableau \ref{tab:feature-importance}).
 
-L'analyse révèle que `quiz_submission_latency` (le temps entre l'ouverture d'un devoir et sa soumission par l'étudiant) est la caractéristique la plus prédictive (32,4 \%). Les étudiants qui soumettent des devoirs quelques minutes avant la date limite — ou en retard — sont nettement plus susceptibles d'échouer. `quiz_avg_score` (22,1 \%) et `total_login_days` (15,5 \%) suivent, confirmant qu'un engagement constant est aussi important que la compétence brute.
+L'analyse révèle que \texttt{quiz\_submission\_latency} (le temps entre l'ouverture d'un devoir et sa soumission par l'étudiant) est la caractéristique la plus prédictive (32,4 \%). Les étudiants qui soumettent des devoirs quelques minutes avant la date limite — ou en retard — sont nettement plus susceptibles d'échouer. \texttt{quiz\_avg\_score} (22,1 \%) et \texttt{total\_login\_days} (15,5 \%) suivent, confirmant qu'un engagement constant est aussi important que la compétence brute.
 
 \begin{table}[H]
 \centering
@@ -366,6 +378,13 @@ Réussite (0) & 0,94 & 0,91 & 0,92 & 171 \\
 \hline
 \end{tabular}
 \end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/roc_curve.png}
+    \caption{Courbe ROC pour le modèle PathPredictor XGBoost, démontrant une haute Aire Sous la Courbe (AUC) de 0,91, indiquant une forte séparabilité entre les classes Réussite et Échec.}
+    \label{fig:roc_curve}
+\end{figure}
 
 \begin{table}[H]
 \centering
@@ -415,9 +434,9 @@ XGBoost a fourni le plus haut AUC-ROC (0,91), indiquant une capacité discrimina
 L'algorithme K-Means a identifié trois clusters stables ($k=3$). Nous avons analysé les centroïdes de ces clusters pour attribuer des étiquettes sémantiques :
 
 \begin{enumerate}
-    \item \textbf{Cluster 0 ("À Risque" - 35 \% de la population)} : Caractérisé par un faible `total_time` ($z=-1,2$), une latence élevée `latency` ($z=+0,9$) et un faible `quiz_score` ($z=-0,8$). Ce groupe s'aligne étroitement avec les prédictions de la classe "Échec".
-    \item \textbf{Cluster 1 ("Standard" - 45 \% de la population)} : Métriques moyennes dans l'ensemble. `quiz_score` proche de 0,0 (moyenne). Ce groupe nécessite une surveillance mais pas d'intervention immédiate.
-    \item \textbf{Cluster 2 ("Haute Performance" - 20 \% de la population)} : Très haut `quiz_score` ($z=+1,5$), nombre élevé de messages forum `forum_post_count` ($z=+1,2$). Fait intéressant, leur `total_time` n'était pas le plus élevé — indiquant une efficacité.
+    \item \textbf{Cluster 0 ("À Risque" - 35 \% de la population)} : Caractérisé par un faible \texttt{total\_time} ($z=-1,2$), une latence élevée \texttt{latency} ($z=+0,9$) et un faible \texttt{quiz\_score} ($z=-0,8$). Ce groupe s'aligne étroitement avec les prédictions de la classe "Échec".
+    \item \textbf{Cluster 1 ("Standard" - 45 \% de la population)} : Métriques moyennes dans l'ensemble. \texttt{quiz\_score} proche de 0,0 (moyenne). Ce groupe nécessite une surveillance mais pas d'intervention immédiate.
+    \item \textbf{Cluster 2 ("Haute Performance" - 20 \% de la population)} : Très haut \texttt{quiz\_score} ($z=+1,5$), nombre élevé de messages forum \texttt{forum\_post\_count} ($z=+1,2$). Fait intéressant, leur \texttt{total\_time} n'était pas le plus élevé — indiquant une efficacité.
 \end{enumerate}
 
 Le Score Silhouette pour cette configuration de clustering était de \textbf{0,68}, indiquant une séparation raisonnablement forte entre les groupes.
@@ -450,7 +469,7 @@ EduPath-MS a un potentiel d'impact institutionnel large en faisant passer le mod
 \textbf{Scénarios d'Adoption Institutionnelle} :
 \begin{itemize}
     \item \textbf{Systèmes d'Alerte Précoce} : En déployant EduPath-MS, les universités peuvent automatiser le processus de "signalement de mi-semestre". Au lieu de compter sur les rapports manuels des instructeurs, le système achemine automatiquement les listes d'étudiants à risque vers les conseillers pédagogiques.
-    \item \textbf{Optimisation des Ressources} : Le `RecoBuilder` garantit que les ressources de tutorat humain coûteuses sont allouées aux étudiants qui en ont le plus besoin (Haut Risque), tandis que les étudiants Standard sont soutenus via des recommandations de contenu automatisées.
+    \item \textbf{Optimisation des Ressources} : Le \texttt{RecoBuilder} garantit que les ressources de tutorat humain coûteuses sont allouées aux étudiants qui en ont le plus besoin (Haut Risque), tandis que les étudiants Standard sont soutenus via des recommandations de contenu automatisées.
 \end{itemize}
 
 \textbf{Habilitation de la Recherche} :
@@ -478,7 +497,7 @@ Nous présentons deux parcours utilisateurs détaillés pour démontrer le syst�
 
 \begin{enumerate}
     \item \textbf{Semaine 3} : Younes manque une connexion pendant 4 jours. \textit{PrepaData} agrège cette lacune.
-    \item \textbf{Profilage} : \textit{StudentProfiler} détecte la baisse de `login_regularity`. Sa probabilité d'appartenance au cluster change : Cluster 1 (80 \%) $\to$ Cluster 0 (65 \%).
+    \item \textbf{Profilage} : \textit{StudentProfiler} détecte la baisse de \texttt{login\_regularity}. Sa probabilité d'appartenance au cluster change : Cluster 1 (80 \%) $\to$ Cluster 0 (65 \%).
     \item \textbf{Prédiction} : \textit{PathPredictor} voit la combinaison de "Connexion Manquée" + "Baisse Score Quiz". Le Score de Risque bondit de 0,35 à \textbf{0,78}.
     \item \textbf{Intervention} : Le système déclenche un Événement.
         - \textit{TeacherConsole} : La carte de Younes devient Rouge (Figure \ref{fig:teacher_console}).
@@ -498,7 +517,7 @@ Nous présentons deux parcours utilisateurs détaillés pour démontrer le syst�
 
 \begin{enumerate}
     \item \textbf{Anomalie} : Les systèmes basés sur des règles standard signalent souvent Sarah comme "À Risque" car sa "Fréquence de Connexion" est faible (1/semaine).
-    \item \textbf{Correction IA} : \textit{StudentProfiler} (K-Means) la classe dans le Cluster 2 car son `quiz_score` et son `efficiency` (Score/Temps) sont des valeurs aberrantes.
+    \item \textbf{Correction IA} : \textit{StudentProfiler} (K-Means) la classe dans le Cluster 2 car son \texttt{quiz\_score} et son \texttt{efficiency} (Score/Temps) sont des valeurs aberrantes.
     \item \textbf{Résultat} : Le système apprend que "Faible Fréquence" + "Haut Score" = "Haute Efficacité", et non un risque. Aucune alarme n'est levée, évitant la "Fatigue d'Alerte" pour l'instructeur.
 \end{enumerate}
 
