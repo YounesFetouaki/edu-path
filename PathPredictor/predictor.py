@@ -50,7 +50,7 @@ def train_model():
         
         print(f"Accuracy: {acc}")
         mlflow.log_metric("accuracy", acc)
-        mlflow.xgboost.log_model(model, "xgboost-model")
+        # mlflow.xgboost.log_model(model, "xgboost-model")
         
         # Save local pickle for easy loading in API
         with open("model.pkl", "wb") as f:
